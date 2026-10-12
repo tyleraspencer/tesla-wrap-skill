@@ -35,6 +35,18 @@ Use the orientation reference as the single authority for panel axes, measured b
 
 Preserve approved details on unrelated edits.
 
+## Themed requests: use the real thing
+
+When the user asks for a theme (a brand, school, city or region, landmark, event, show, club, and so on), research it before designing. Do not work from memory or approximate it.
+
+- **Find official sources first:** the organization's brand or style guide, press or media kit, or official site. For places, use the official flag, seal, or emblem from a government source or a public-domain/freely licensed source such as Wikimedia Commons. Use web search or fetch tools when available.
+- **Colors:** take exact values (hex, or Pantone converted to sRGB) from the official guide. If there are primary and secondary colors, use the primary as the base and say which you used.
+- **Logos and marks:** use the official vector file (SVG preferred) or the highest-resolution official raster. Place it exactly as published: no redrawing, tracing, AI regeneration, stretching, recoloring (except official one-color variants), or invented detail. Respect the mark's aspect ratio and clear space, and never mirror it.
+- **Typefaces and patterns:** use the official typeface if it is available and licensed for this use; otherwise pick the closest free typeface and say so. Reuse signature patterns, stripes, or motifs as published.
+- **Imagery:** use graphic marks and patterns. Use photographs only when they are public-domain or freely licensed.
+- **If official assets can't be retrieved** (behind a login, blocked, or terms that forbid use): build the design from the official colors and any freely usable emblem, never a recreated logo, and tell the user plainly what you couldn't use.
+- **Keep the sources** (URLs, asset names, color values) in the internal placement manifest. Then place the assets under the same geometry, orientation, and seam rules as any other artwork. The final message stays a plain description of the design; mention a missing or substituted asset only when it matters.
+
 ## 3. Render inside immutable masks
 
 Use image generation for raster art when appropriate, following its workflow, or use authentic vector assets and precise paths for logos, typography, and stripes. Treat generated art as interior artwork only: NEVER accept generated panel silhouettes as the final geometry. Composite artwork into the original masks using deterministic tooling.
