@@ -169,5 +169,39 @@ class PlacementTests(unittest.TestCase):
             Renderer(c, '.', 1).render()
 
 
+class SizeCapTests(unittest.TestCase):
+    def noisy(self, folder):
+        rng = np.random.default_rng(0)
+        Image.fromarray(rng.integers(0, 256, (1024, 1024, 4), dtype=np.uint8)).save(Path(folder) / 'noise.png')
+
+    def test_renderer_never_writes_oversized_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.noisy(folder)
+            c = design()
+            c['layers'] = [{'panels': list(range(1, 21)), 'operations': [
+                {'kind': 'image', 'file': 'noise.png', 'fit': 'stretch', 'center': [512, 512], 'size': [1024, 1024]}]}]
+            output, manifest = Path(folder) / 'Noisy.png', Path(folder) / 'm.json'
+            r = Renderer(c, folder, 1)
+            r.save(output, manifest)
+            self.assertLess(output.stat().st_size, 1_000_000)
+            self.assertTrue(r.size_fit['reduced'])
+            self.assertTrue(any('cap' in w for w in r.warnings))
+            saved = np.array(Image.open(output).convert('RGBA'))
+            self.assertEqual(saved.shape, (1024, 1024, 4))
+            self.assertTrue(np.array_equal(saved[:, :, 3], r.original[:, :, 3]))
+            self.assertTrue(np.array_equal(saved[r.ids == 0], r.original[r.ids == 0]))
+
+    def test_fit_size_keeps_flat_colors_exact(self):
+        r = Renderer(design(), '.', 1)
+        rgba = np.array(r.render())
+        rgba[r.ids == 2, :3] = np.random.default_rng(1).integers(0, 256, (int((r.ids == 2).sum()), 3), dtype=np.uint8)
+        from fit_size import fit_to_cap, reduce_colors
+        out = reduce_colors(rgba, r.original, 8)
+        self.assertTrue(np.all(out[r.ids == 7, :3] == [0, 33, 71]))  # untouched navy stays exact
+        fitted, info = fit_to_cap(rgba, r.original, cap=150_000)
+        self.assertLess(info["final_bytes"], 150_000)
+        self.assertTrue(np.array_equal(fitted[:, :, 3], r.original[:, :, 3]))
+
+
 if __name__ == '__main__':
     unittest.main()

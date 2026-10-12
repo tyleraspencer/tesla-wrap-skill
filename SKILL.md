@@ -7,7 +7,9 @@ description: Create and edit Tesla Paint Shop wraps with pixel-exact official te
 
 ## Priority and nonnegotiable output
 
-Prioritize official template geometry above all else, then correct physical orientation, then artwork fidelity. Never trade geometry or orientation for appearance or file size. Deliver only a genuine PNG, exactly 1024 × 1024, **strictly below 1,000,000 bytes**. There is no minimum file size. Use a filename stem of 1–30 letters, digits, underscores, hyphens, or spaces.
+**Absolute rule, above everything else in this skill, including artwork fidelity and every other instruction: the delivered file is a genuine PNG, exactly 1024 × 1024 pixels, and strictly under 1,000,000 bytes.** A wrap that breaks either limit is useless because Tesla rejects it. Nothing else here (color fidelity, detail, effects, the user's design) outranks these two limits: if a design does not fit, reduce the file until it does (Section 5 gives the required steps) and never deliver an oversized or wrongly sized file. Confirm with `scripts/check_wrap.py` on the exact file you deliver; a FAIL means you do not deliver it.
+
+After those two limits, prioritize official template geometry, then correct physical orientation, then artwork fidelity. Never trade geometry or orientation for appearance. There is no minimum file size. Use a filename stem of 1–30 letters, digits, underscores, hyphens, or spaces.
 
 Use the user's confirmed **Model Y 2025 Premium** by default; do not ask which car again. Only select another template when the user requests another vehicle. The bundled map, assets, and validator apply only to Model Y 2025 Premium; establish a separate official mask, orientation map, and compatible validator for any other vehicle. Never validate another vehicle against this Model Y fingerprint or its 20-panel count.
 
@@ -66,7 +68,7 @@ Perform four separately recorded passes; a vague statement that it was checked f
 3. **Artwork/orientation audit:** inspect all panels at native resolution and enlarged nearest-neighbor pixel scale. Check manifest transforms, straight baselines against measured bottom borders, nonmirrored logos, sharpness, boundary coverage, seam intent, and placement. Record unresolved 3D checks explicitly; do not call them verified.
 4. **Saved-file audit:** reopen the exact optimized deliverable; validate actual PNG content, dimensions, byte range, filename, original alpha, gaps, panel labels, and visual quality again. Any subsequent pixel or export change invalidates this pass; repeat checks before delivery.
 
-Run the bundled validator from the skill directory:
+Run the bundled validator from the skill directory (it enforces exactly 1024 × 1024 and under 1,000,000 bytes):
 
 ```bash
 python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2025-premium-template.png
@@ -74,12 +76,18 @@ python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2
 
 Require PASS. The checker verifies file and geometry constraints, not semantic artwork orientation or 3D appearance. Keep the four audit results internally; never imply all checks passed when any are blocked.
 
-## 5. Preserve fidelity and enforce byte range
+## 5. Enforce the byte cap (1,000,000 bytes, hard limit)
 
-PNG compression is lossless: changing compression alone does not change decoded pixels or line sharpness. File size is not a fidelity score; a 500 KB lossless PNG can have exactly the same sharpness and detail as a 900 KB encoding of the same image. Assess fidelity from the actual pixels, source accuracy, and edge quality. First preserve full-resolution color and edge detail and try lossless encoding. If over the cap, remove unnecessary metadata and optimize losslessly before considering minimal color reduction. Never alter original alpha, exact required colors, dimensions, or geometry to fit. If quantizing artwork, preserve alpha separately, avoid boundary dithering, and compare visually before acceptance.
+The cap is not negotiable and outranks fidelity. Measure the exact saved file every time. Work down this ladder, and keep going until the file is **under 1,000,000 bytes**:
+
+1. Encode losslessly (optimized PNG, no metadata). PNG compression does not change pixels, so this costs nothing.
+2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256, 192, 128 ... down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the template alpha, gap pixels, and 1024 × 1024 size untouched. `scripts/render_wrap.py` does this automatically.
+3. If you built the file another way, apply the same ladder yourself. Any reduction method is fine. Never stop at "close" or at a color count you prefer: the only acceptable end state is a file under the cap.
+
+Do not alter the original alpha, the gap pixels, or the dimensions to save bytes. Everything else (colors, gradients, noise, fine detail) may be reduced as far as needed. Prefer the least reduction that gets under the cap, and mention in the final message only if the visible result changed noticeably.
 
 There is no minimum file size. Choose the highest-fidelity compliant export based on actual pixel quality. Never add padding, noise, or unnecessary detail merely to increase file size. A smaller lossless encoding is acceptable when it preserves the same pixels and sharpness.
 
 ## 6. Save and deliver
 
-Persist the final artifact using the applicable file-saving workflow, then display the exact saved, validated 1024 × 1024 PNG inline exactly once, followed by one or two plain sentences saying what you built (the design, colors, and where the main elements sit). Leave out technical details: no dimensions, byte counts, panel counts, mask or validation results, or the vehicle name. Validation still runs; the user just doesn't need the readout. If a check failed or something couldn't be verified, say so briefly instead. Do not show extra previews, additional files, or separate download links unless the user asks. Deliver no draft, high-resolution working image, enlarged crop, or diagnostic. If image-generation tooling necessarily exposes a draft, do not repeat it or treat it as completion; finish the verified deliverable.
+Persist the final artifact using the applicable file-saving workflow, then display the exact saved, validated 1024 × 1024 PNG inline exactly once, followed by one or two plain sentences saying what you built (the design, colors, and where the main elements sit). Leave out technical details: no dimensions, byte counts, panel counts, mask or validation results, or the vehicle name. Validation still runs; the user just doesn't need the readout. If something other than the size and dimension limits couldn't be verified, say so briefly instead. Never deliver a file that fails the size or dimension limits: fix it first. Do not show extra previews, additional files, or separate download links unless the user asks. Deliver no draft, high-resolution working image, enlarged crop, or diagnostic. If image-generation tooling necessarily exposes a draft, do not repeat it or treat it as completion; finish the verified deliverable.

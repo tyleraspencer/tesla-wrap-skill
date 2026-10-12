@@ -13,6 +13,8 @@ from PIL import Image, ImageColor, ImageDraw, ImageFont
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fit_size import CAP, fit_to_cap  # noqa: E402
 
 
 class Renderer:
@@ -38,6 +40,7 @@ class Renderer:
         self.baselines = {}
         self.records = {p['id']: {**p, 'layers': []} for p in self.geometry['panels']}
         self.fonts_used, self.wordmarks, self.warnings, self.strict = set(), [], [], strict
+        self.size_fit = None
         self._coverage, self.current_panels = False, []
 
     def color(self, value):
@@ -377,7 +380,15 @@ class Renderer:
             raise ValueError('Use a PNG filename with 1–30 allowed characters')
         output.parent.mkdir(parents=True, exist_ok=True)
         image = self.render()
+        # Hard limit: never write a file at or over the byte cap; reduce colors until it fits.
+        fitted, self.size_fit = fit_to_cap(np.array(image), self.original)
+        if self.size_fit['reduced']:
+            self.warnings.append(f"PNG was {self.size_fit['initial_bytes']} bytes (cap {CAP}); reduced to "
+                                 f"{self.size_fit['colors']} colors, alpha and gaps untouched")
+        image = Image.fromarray(fitted)
         image.save(output, optimize=True, compress_level=9)
+        if output.stat().st_size >= CAP:
+            raise ValueError('Saved PNG is not under the byte cap')
         with Image.open(output) as saved:
             if not np.array_equal(np.array(saved.convert('RGBA')), np.array(image)):
                 raise ValueError('Saved pixels differ from render')
@@ -389,7 +400,7 @@ class Renderer:
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text(json.dumps({
             'template_sha256': self.geometry['sha256'], 'sources': self.config.get('sources', []),
-            'fonts_used': sorted(self.fonts_used), 'wordmarks': self.wordmarks, 'warnings': self.warnings,
+            'fonts_used': sorted(self.fonts_used), 'wordmarks': self.wordmarks, 'warnings': self.warnings, 'size_fit': self.size_fit,
             'panels': list(self.records.values()), 'door_baselines': self.baselines,
             'audits': {'pixel_geometry': 'PASS exact source alpha and gaps',
                        'panel_geometry': 'PASS pinned areas/bounds and bundled connected-component check',

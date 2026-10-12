@@ -47,7 +47,7 @@ Directional art (text, images, stars, wordmarks) is allowed on every panel, incl
 
 ## Export and inspection
 
-The renderer verifies the pinned template, all ID areas/bounds, and gap support; renders each layer stack at high resolution; downsamples its artwork once; then copies original alpha and fully transparent RGB unchanged. It saves losslessly, reopens and compares decoded pixels, and runs `check_wrap.py`. It fails rather than silently quantize an oversized export.
+The renderer verifies the pinned template, all ID areas/bounds, and gap support; renders each layer stack at high resolution; downsamples its artwork once; then copies original alpha and fully transparent RGB unchanged. It saves losslessly; if the PNG would be at or over 1,000,000 bytes, it automatically reduces the colors of the visible pixels (via `scripts/fit_size.py`: most frequent exact colors kept, no dithering, alpha and gaps untouched) until it fits, and records that in the manifest (`size_fit`) and warnings. It then reopens and compares decoded pixels and runs `check_wrap.py`. It can never write a file at or over the cap. To shrink a PNG made another way: `python scripts/fit_size.py in.png out.png`.
 
 The required `--manifest` records every panel, layer, explicit transform parameters, fitted door baselines, provenance, and automated checks. Artwork/orientation remains **PENDING** until native and enlarged visual inspection, contour-overlay inspection, and the skill's full four-pass audit are completed. Keep diagnostics internal. Never interpret validator PASS as proof of semantic orientation, boundary clearance, exact seam continuity, or 3D appearance. Check the live official template separately as required by SKILL.md.
 

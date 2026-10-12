@@ -62,7 +62,8 @@ python scripts/check_wrap.py my_wrap.png --template assets/modely-2025-premium-t
 | `references/ground-edge-reference.png` | Visual guide to ground-facing edges |
 | `assets/modely-2025-premium-template.png` | Official template (kept untouched) |
 | `assets/modely-2025-premium-panel-ids.png` | Map of all 20 panel islands |
-| `scripts/check_wrap.py` | PNG and template-geometry validator |
+| `scripts/check_wrap.py` | PNG and template-geometry validator (1024 × 1024, under 1,000,000 bytes) |
+| `scripts/fit_size.py` | Shrinks a wrap PNG under the byte cap without touching alpha or gaps |
 
 ## Source
 
