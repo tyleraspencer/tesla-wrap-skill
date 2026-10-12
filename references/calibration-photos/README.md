@@ -12,7 +12,7 @@ These back the conclusions in [../seam-adjacency.md](../seam-adjacency.md). Open
 | `04-top-down.jpg` | Straight top-down, nose up |
 | `Calibration_Grid.png` | The texture used. Passes `scripts/check_wrap.py`, so it can be re-uploaded to retake photos |
 
-Not yet photographed: passenger side, straight-on front, straight-on rear, close-ups of the front fender/bumper corner.
+Additional views (passenger-side profile, straight-on front, straight-on rear, front-right and rear-right three-quarter) were reviewed for `seam-adjacency.md` but are not stored here because they show the in-car screen.
 
 ## Preview
 
