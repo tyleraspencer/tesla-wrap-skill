@@ -15,7 +15,7 @@ Official sources:
 - Repository: https://github.com/teslamotors/custom-wraps
 - Exact template: https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png
 
-Keep drafts, mockups, placement maps, and diagnostic images internal unless requested. Show only the verified final PNG, with its download link immediately in the same final response. Never stop at a preview or make the user ask for the download. Brief text updates are fine.
+Keep high-resolution working images, enlarged inspection crops, drafts, mockups, placement maps, and diagnostics internal unless the user asks. Show only the validated final 1024 × 1024 PNG, once, inline (see Section 6).
 
 ## 1. Lock and map the template BEFORE making artwork
 
@@ -68,4 +68,4 @@ There is no minimum file size. Choose the highest-fidelity compliant export base
 
 ## 6. Save and deliver
 
-Persist the final artifact using the applicable file-saving workflow. Present the exact saved final PNG inline and its immediate download link together, with vehicle, 1024 × 1024 dimensions, and measured byte count. Deliver no draft or mockup by default. If image-generation tooling necessarily exposes a draft, do not repeat it or treat it as completion; finish the verified deliverable.
+Persist the final artifact using the applicable file-saving workflow, then display the exact saved, validated 1024 × 1024 PNG inline exactly once, followed by a brief confirmation of what changed (plus vehicle and measured byte count). Do not show extra previews, additional files, or separate download links unless the user asks. Deliver no draft, high-resolution working image, enlarged crop, or diagnostic. If image-generation tooling necessarily exposes a draft, do not repeat it or treat it as completion; finish the verified deliverable.
