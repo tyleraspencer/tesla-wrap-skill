@@ -30,7 +30,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 | 18 \| 20, 19 \| 20 | Rear bumper corner to trunk face | Slanted seam running from the tail-lamp bar down to the bumper; the corner piece wraps from the side onto the rear face | seen |
 | 17 \| 20 | Spoiler lip to trunk face | The tail-lamp bar sits between them on the car; they do not touch | seen |
 | 9 → 4/8, 10 → 3/7 | Mirror cap to the fender/door corner | Cap is a separate surface; no continuity | seen |
-| 13 \| 20, 14 \| 20 | Rear quarter to trunk face | They do not meet. The quarter ends at the tail lamp's outer end and the corner piece (18 or 19) sits between it and the trunk face | seen (13); inferred (14) |
+| 13 \| 20, 14 \| 20 | Rear quarter to trunk face | They do not meet. The quarter ends at the tail lamp's outer end and the corner piece (18 or 19) sits between it and the trunk face | seen (both sides) |
 
 ## How to use this when planning a multi-panel design
 
