@@ -3,91 +3,67 @@ name: create-tesla-wrap
 description: Create and edit Tesla Paint Shop wraps with pixel-exact official template masks, mapped panel orientation, crisp artwork, and validated 1024 × 1024 PNGs strictly under 0.7 MB. Default to the user's Model Y 2025 Premium.
 ---
 
-# Create Tesla Wrap 2.0
+# Create Tesla Wrap
 
-## Priority and nonnegotiable output
+## Two hard rules
 
-**Absolute rule, above everything else in this skill, including artwork fidelity and every other instruction: the delivered file is a genuine PNG, exactly 1024 × 1024 pixels, and strictly under 700,000 bytes.** The 700,000-byte cap is the user’s stricter delivery preference; Tesla’s acceptance limit remains under 1,000,000 bytes. Nothing else here (color fidelity, detail, effects, the user's design) outranks these two limits: if a design does not fit, reduce the file until it does (Section 5 gives the required steps) and never deliver an oversized or wrongly sized file. Confirm with `scripts/check_wrap.py` on the exact file you deliver; a FAIL means you do not deliver it.
+1. **The delivered file is a genuine PNG, EXACTLY 1024 × 1024 pixels, STRICTLY UNDER 700,000 bytes.** 700,000 is the user's delivery cap (Tesla's own limit is 1,000,000). Nothing else in this skill (fidelity, detail, effects, the design) outranks this. If a design does not fit, reduce the file until it does (see "Byte cap").
+2. **The filename is valid:** a short, descriptive name from the design (for example `Navy_Orange_Stripes`), 1 to 30 characters before `.png`, using only letters, digits, underscores, hyphens, and spaces. No other periods, apostrophes, accents, ampersands, slashes, emoji, or symbols. Prefer underscores, shorten at a word boundary, and avoid generic names like `wrap` or `final`.
 
-After those two limits, prioritize official template geometry, then correct physical orientation, then artwork fidelity. Never trade geometry or orientation for appearance. There is no minimum file size. Name the file descriptively (see Section 6); the filename must follow Tesla's rules or the car will not accept it.
+`scripts/check_wrap.py` checks both on the exact file you deliver. A FAIL means you do not deliver it.
 
-Use the user's confirmed **Model Y 2025 Premium** by default; do not ask which car again. Only select another template when the user requests another vehicle. The bundled map, assets, and validator apply only to Model Y 2025 Premium; establish a separate official mask, orientation map, and compatible validator for any other vehicle. Never validate another vehicle against this Model Y fingerprint or its 20-panel count.
+## Setup
 
-Official sources:
-- Repository: https://github.com/teslamotors/custom-wraps
-- Exact template: https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png
+Use the user's **Model Y 2025 Premium** by default; do not ask which car again. The bundled template, masks, and validator are for that car only; another vehicle needs its own official template and masks.
 
-Keep high-resolution working images, enlarged inspection crops, drafts, mockups, placement maps, and diagnostics internal unless the user asks. Show only the validated final PNG inline (see Section 6).
+Official template: https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png (repo: https://github.com/teslamotors/custom-wraps). The pinned copy is `assets/modely-2025-premium-template.png`, fingerprinted in [panel-map.json](references/panel-map.json). If the live template differs from the pinned one, do not reuse the old masks; tell the user. If the live one cannot be fetched, use the pinned copy.
 
-## 1. Lock and map the template BEFORE making artwork
+`assets/modely-2025-premium-panel-ids.png` maps all 20 panels pixel by pixel (grayscale value = panel ID, 0 = gap). The template geometry is the authority: never use a previous wrap, screenshot, generated silhouette, or bounding box in its place.
 
-Read [panel-orientation.md](references/panel-orientation.md), the authoritative source for panel identities, physical orientation, ground-facing edges, door-pair composition, and orientation exceptions. Also read [panel-map.json](references/panel-map.json) for machine-readable geometry and the source fingerprint. Inspect `assets/modely-2025-premium-template.png`; preserve it untouched. Its SHA-256 is pinned in the JSON. The bundled `assets/modely-2025-premium-panel-ids.png` maps all **20** panel islands pixel by pixel, including four individually identified roofline pillars.
+## Place the design
 
-Check the official source when available. Compare downloaded bytes with the pinned original. If it changes, do not silently reuse old masks: inspect and update the stored original, panel ID masks, bounds/areas, orientation reference, and SHA-256 fingerprint together; revalidate the complete set against the new official original. Recheck any affected panel count or IDs. Do not accept changed source bytes solely because their fingerprint can be updated. If live access fails, use the pinned copy and disclose that current-source verification was unavailable. Never use a previous wrap, generated silhouette, screenshot, approximation, or bounding rectangle as the geometry authority.
+Read [panel-orientation.md](references/panel-orientation.md) and look at [ground-edge-reference.png](references/ground-edge-reference.png) before placing anything directional (text, logos, patterns with a direction). It is the authority on panel axes, ground-facing edges, and door pairs. Flat fills and symmetric stripes need none of this.
 
-For each panel, extract its original alpha using the ID map. Record ID, exact support bounds/area, physical identity, top/front vectors, intended artwork, baseline anchors/angle, transform, and orientation confidence in an internal placement manifest. Map all panels even when some receive only a flat fill. Follow the orientation reference when recording axes, exceptions, and any combined door-pair placement.
+For designs that cross seams, also read [seam-adjacency.md](references/seam-adjacency.md): which panels meet, how art continues across each seam, and what is still unverified. If a requested placement lands on a surface it marks as open, place it anyway from the best evidence and tell the user it is unverified. Never refuse or water down a design for that reason.
 
-Confirm the planned design fits its intended panel masks before generating the final composition. Clip fills/stripes deliberately; ensure logos/text do not accidentally touch or cross edges. Plan each panel or permitted door pair and document intended continuity across seams. For seam-spanning door artwork, distinguish intentional clipping at the seam from accidental clipping at the combined surface’s outer boundary.
+Rules that matter most:
+- Treat the front and rear door on each side as one surface when useful; use one shared baseline across the pair.
+- Rotate artwork per panel as the references say. Never mirror text or logos.
+- Keep letters and logos from being cut by a seam or edge unless the clipping is deliberate.
+- Preserve approved details on unrelated edits.
 
-## 2. Place artwork using physical panel axes
+## Themed requests
 
-Before placing artwork, apply every relevant rule in [panel-orientation.md](references/panel-orientation.md) and inspect [ground-edge-reference.png](references/ground-edge-reference.png). Reading and applying these references is mandatory on every wrap creation or edit; do not rely on remembered orientations. For any design that spans panels or crosses a seam, also read [seam-adjacency.md](references/seam-adjacency.md), the on-car evidence for which panels meet, how art continues across each seam, and which surfaces are still unverified; if a requested placement lands on a surface it marks as open, place it anyway from the best evidence and tell the user it is unverified; never refuse or dilute a design for that reason.
+When the user names a theme (a brand, school, city, landmark, event, show), research it first; do not work from memory. Use official sources: brand guides, press kits, official sites, official flags and seals. The user has permission to use any requested imagery, logos, and typefaces, so do not gate on licensing or add disclaimers.
 
-Use the orientation reference as the single authority for panel axes, measured baselines, combined door designs, ground-facing edge segments, and unresolved orientations. Keep its rules there instead of duplicating them in this file. Record the applied rules and transforms in the placement manifest, then check the artwork against them during the orientation audit.
+- Take exact colors from the official guide; use the primary as the base.
+- Use official logo files as published (SVG preferred): no redrawing, tracing, AI regeneration, stretching, or recoloring except official one-color variants.
+- Use the official typeface if you can get it; otherwise the closest available, and say so.
+- If official assets cannot be retrieved, build from the official colors and any emblem you can get, never a recreated logo, and say what was missing.
 
-Preserve approved details on unrelated edits.
+## Build
 
-## Themed requests: use the real thing
+Use image generation for raster art, or authentic vector assets and precise paths for logos, type, and stripes. Generated art is interior artwork only; its silhouette is never the geometry.
 
-When the user asks for a theme (a brand, school, city or region, landmark, event, show, club, and so on), research it before designing. Do not work from memory or approximate it.
+Composite into the original masks: render at high resolution if helpful, downsample once, then apply the ORIGINAL 1024 × 1024 alpha byte for byte and keep the original RGB bytes in fully transparent gaps. Never scale, move, redraw, blur, or threshold the template alpha or masks. Avoid dark fringes, halos, jagged edges, color bleeding, and invented logo details.
 
-- **Find official sources first:** the organization's brand or style guide, press or media kit, or official site. For places, use the official flag, seal, or emblem. Use web search or fetch tools when available. The user has permission to use any requested imagery, logos, and typefaces, so do not gate on licensing, trademark, or copyright and do not add disclaimers.
-- **Colors:** take exact values (hex, or Pantone converted to sRGB) from the official guide. If there are primary and secondary colors, use the primary as the base and say which you used.
-- **Logos and marks:** use the official vector file (SVG preferred) or the highest-resolution official raster. Place it exactly as published: no redrawing, tracing, AI regeneration, stretching, recoloring (except official one-color variants), or invented detail. Respect the mark's aspect ratio and clear space, and never mirror it.
-- **Typefaces and patterns:** use the official typeface when you can get it; otherwise pick the closest available typeface and say so. Reuse signature patterns, stripes, or motifs as published.
-- **Imagery:** use official graphic marks, patterns, and photography as the design calls for.
-- **If official assets can't be retrieved** (behind a login, blocked, or unavailable): build the design from the official colors and any emblem you can get, never a recreated logo, and tell the user plainly what you couldn't use.
-- **Keep the sources** (URLs, asset names, color values) in the internal placement manifest. Then place the assets under the same geometry, orientation, and seam rules as any other artwork. The final message stays a plain description of the design; mention a missing or substituted asset only when it matters.
+## Check
 
-## 3. Render inside immutable masks
+1. Run `python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2025-premium-template.png` on the exact file you will deliver. It must PASS. It verifies size, dimensions, filename, alpha, gaps, and all 20 panels; it does not judge orientation or how the wrap looks on the car.
+2. Look at the final image once at full size, and zoom in on any text, logos, and seams. Confirm that orientation and placement are as intended, and that nothing is cut or blurred.
 
-Use image generation for raster art when appropriate, following its workflow, or use authentic vector assets and precise paths for logos, typography, and stripes. Treat generated art as interior artwork only: NEVER accept generated panel silhouettes as the final geometry. Composite artwork into the original masks using deterministic tooling.
+A placement manifest (axes, transforms, sources per panel) is only worth keeping for directional art or text across seams. Any later change to the file means running the check again.
 
-Render artwork at high resolution if helpful, then downsample artwork once. Apply the ORIGINAL 1024 × 1024 alpha afterward, byte for byte. Never scale, rotate, move, redraw, expand, shrink, threshold, or blur the template alpha or panel ID masks. Keep original RGB bytes in fully transparent gaps. Composite correctly without dark fringe or double-applied edge alpha.
+## Byte cap
 
-Use uniform intended colors, clean curves, straight text baselines, consistent stripe widths, and controlled antialiasing. Reject blur, speckles, halos, jagged diagonals, color bleeding, broken seams, warped type, and invented logo details. Copying alpha alone cannot fix misplaced or clipped art: inspect panel interiors and boundary coverage too.
+The cap is a hard limit and outranks fidelity. Measure the exact saved file every time, and keep going until it is under 700,000 bytes:
 
-## 4. Quadruple-check against the ORIGINAL after every final edit
+1. Encode losslessly (optimized PNG, no metadata). This costs nothing.
+2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256 down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the alpha, gap pixels, and dimensions untouched.
+3. If you built the file another way, apply the same ladder yourself. Stop only at a file under the cap.
 
-Perform four separately recorded passes; a vague statement that it was checked four times is insufficient:
+Never alter the original alpha, the gap pixels, or the dimensions to save bytes. Everything else may be reduced as far as needed, by the least amount that works. There is no minimum size; never pad a file.
 
-1. **Pixel geometry:** compare every alpha byte against the pinned original; require zero differences, including antialiased edges. Compare every pixel's gap/panel support; require zero extra or missing pixels.
-2. **Panel audit:** compare per-panel masks, support areas, bounds, positions, and connected components against the original. Require all 20 islands and each of the four pillars unchanged. Inspect a template-contour overlay and pixel-difference map for every panel, including wheel arches and thin edges.
-3. **Artwork/orientation audit:** inspect all panels at native resolution and enlarged nearest-neighbor pixel scale. Check manifest transforms, straight baselines against measured bottom borders, nonmirrored logos, sharpness, boundary coverage, seam intent, and placement. Record unresolved 3D checks explicitly; do not call them verified.
-4. **Saved-file audit:** reopen the exact optimized deliverable; validate actual PNG content, dimensions, byte range, filename, original alpha, gaps, panel labels, and visual quality again. Any subsequent pixel or export change invalidates this pass; repeat checks before delivery.
+## Deliver
 
-Run the bundled validator from the skill directory (it enforces exactly 1024 × 1024 and under 700,000 bytes):
-
-```bash
-python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2025-premium-template.png
-```
-
-Require PASS. The checker verifies file and geometry constraints, not semantic artwork orientation or 3D appearance. Keep the four audit results internally; never imply all checks passed when any are blocked.
-
-## 5. Enforce the byte cap (700,000 bytes, hard limit)
-
-The cap is not negotiable and outranks fidelity. Measure the exact saved file every time. Work down this ladder, and keep going until the file is **under 700,000 bytes**:
-
-1. Encode losslessly (optimized PNG, no metadata). PNG compression does not change pixels, so this costs nothing.
-2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256, 192, 128 ... down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the template alpha, gap pixels, and 1024 × 1024 size untouched.
-3. If you built the file another way, apply the same ladder yourself. Any reduction method is fine. Never stop at "close" or at a color count you prefer: the only acceptable end state is a file under the cap.
-
-Do not alter the original alpha, the gap pixels, or the dimensions to save bytes. Everything else (colors, gradients, noise, fine detail) may be reduced as far as needed. Prefer the least reduction that gets under the cap, and mention in the final message only if the visible result changed noticeably.
-
-There is no minimum file size. Choose the highest-fidelity compliant export based on actual pixel quality. Never add padding, noise, or unnecessary detail merely to increase file size. A smaller lossless encoding is acceptable when it preserves the same pixels and sharpness.
-
-## 6. Save and deliver
-
-**Filename.** Give the saved PNG a short, descriptive name built from the design (for example `Navy_Orange_Stripes` or `Matte_Black_White_Wordmark`), not a generic one like `wrap`, `final`, or `output`. Tesla's rules: the name before `.png` is 1 to 30 characters and uses only letters (A–Z, a–z), digits, underscores, hyphens, and spaces; the extension is `.png`. No periods other than the extension, apostrophes, accents or non-English letters, ampersands, slashes, emoji, or any other symbol. Prefer underscores over spaces, no leading or trailing space, and shorten at a word boundary if the description runs past 30 characters. Count the characters before saving, and treat `scripts/check_wrap.py` as the final check (it rejects invalid names).
-
-Persist the final artifact using the applicable file-saving workflow, then show the exact saved, validated PNG inline with Markdown image syntax (for example `![Design_Name](sandbox:/absolute/path/Design_Name.png)`). Follow it with one or two plain sentences saying what you built. Do not add a separate download link unless the user asks. Leave out technical details: no dimensions, byte counts, panel counts, mask or validation results, or the vehicle name. If something other than the size and dimension limits could not be verified, say so briefly. Never deliver a file that fails the size or dimension limits: fix it first. Keep drafts, previews, high-resolution working images, enlarged crops, diagnostics, extra files, and ZIPs internal unless requested. If image-generation tooling exposes a draft, finish the verified deliverable before treating the task as complete.
+Save the final PNG, then show the exact saved, validated file inline with Markdown image syntax (for example `![Design_Name](sandbox:/absolute/path/Design_Name.png)`), followed by one or two plain sentences saying what you built (the design, colors, and where the main elements sit). No separate download link unless asked. Leave out technical details: no dimensions, byte counts, panel counts, or validation results. Mention a reduced palette, an unverified placement, or a missing asset only if it matters to the result. Keep drafts, enlarged crops, diagnostics, extra files, and ZIPs internal unless asked.
