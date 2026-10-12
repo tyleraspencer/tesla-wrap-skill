@@ -1,13 +1,13 @@
 ---
 name: create-tesla-wrap
-description: Create and edit Tesla Paint Shop wraps with pixel-exact official template masks, mapped panel orientation, crisp artwork, and validated 1024 × 1024 PNGs strictly under 1 MB. Default to the user's Model Y 2025 Premium.
+description: Create and edit Tesla Paint Shop wraps with pixel-exact official template masks, mapped panel orientation, crisp artwork, and validated 1024 × 1024 PNGs strictly under 0.7 MB. Default to the user's Model Y 2025 Premium.
 ---
 
 # Create Tesla Wrap 2.0
 
 ## Priority and nonnegotiable output
 
-**Absolute rule, above everything else in this skill, including artwork fidelity and every other instruction: the delivered file is a genuine PNG, exactly 1024 × 1024 pixels, and strictly under 1,000,000 bytes.** A wrap that breaks either limit is useless because Tesla rejects it. Nothing else here (color fidelity, detail, effects, the user's design) outranks these two limits: if a design does not fit, reduce the file until it does (Section 5 gives the required steps) and never deliver an oversized or wrongly sized file. Confirm with `scripts/check_wrap.py` on the exact file you deliver; a FAIL means you do not deliver it.
+**Absolute rule, above everything else in this skill, including artwork fidelity and every other instruction: the delivered file is a genuine PNG, exactly 1024 × 1024 pixels, and strictly under 700,000 bytes.** The 700,000-byte cap is the user’s stricter delivery preference; Tesla’s acceptance limit remains under 1,000,000 bytes. Nothing else here (color fidelity, detail, effects, the user's design) outranks these two limits: if a design does not fit, reduce the file until it does (Section 5 gives the required steps) and never deliver an oversized or wrongly sized file. Confirm with `scripts/check_wrap.py` on the exact file you deliver; a FAIL means you do not deliver it.
 
 After those two limits, prioritize official template geometry, then correct physical orientation, then artwork fidelity. Never trade geometry or orientation for appearance. There is no minimum file size. Name the file descriptively (see Section 6); the filename must follow Tesla's rules or the car will not accept it.
 
@@ -17,7 +17,7 @@ Official sources:
 - Repository: https://github.com/teslamotors/custom-wraps
 - Exact template: https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png
 
-Keep high-resolution working images, enlarged inspection crops, drafts, mockups, placement maps, and diagnostics internal unless the user asks. Deliver only a direct download link to the validated final PNG (see Section 6); do not embed it inline.
+Keep high-resolution working images, enlarged inspection crops, drafts, mockups, placement maps, and diagnostics internal unless the user asks. Show only the validated final PNG inline (see Section 6).
 
 ## 1. Lock and map the template BEFORE making artwork
 
@@ -66,7 +66,7 @@ Perform four separately recorded passes; a vague statement that it was checked f
 3. **Artwork/orientation audit:** inspect all panels at native resolution and enlarged nearest-neighbor pixel scale. Check manifest transforms, straight baselines against measured bottom borders, nonmirrored logos, sharpness, boundary coverage, seam intent, and placement. Record unresolved 3D checks explicitly; do not call them verified.
 4. **Saved-file audit:** reopen the exact optimized deliverable; validate actual PNG content, dimensions, byte range, filename, original alpha, gaps, panel labels, and visual quality again. Any subsequent pixel or export change invalidates this pass; repeat checks before delivery.
 
-Run the bundled validator from the skill directory (it enforces exactly 1024 × 1024 and under 1,000,000 bytes):
+Run the bundled validator from the skill directory (it enforces exactly 1024 × 1024 and under 700,000 bytes):
 
 ```bash
 python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2025-premium-template.png
@@ -74,9 +74,9 @@ python scripts/check_wrap.py /absolute/path/final.png --template assets/modely-2
 
 Require PASS. The checker verifies file and geometry constraints, not semantic artwork orientation or 3D appearance. Keep the four audit results internally; never imply all checks passed when any are blocked.
 
-## 5. Enforce the byte cap (1,000,000 bytes, hard limit)
+## 5. Enforce the byte cap (700,000 bytes, hard limit)
 
-The cap is not negotiable and outranks fidelity. Measure the exact saved file every time. Work down this ladder, and keep going until the file is **under 1,000,000 bytes**:
+The cap is not negotiable and outranks fidelity. Measure the exact saved file every time. Work down this ladder, and keep going until the file is **under 700,000 bytes**:
 
 1. Encode losslessly (optimized PNG, no metadata). PNG compression does not change pixels, so this costs nothing.
 2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256, 192, 128 ... down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the template alpha, gap pixels, and 1024 × 1024 size untouched.
@@ -90,4 +90,4 @@ There is no minimum file size. Choose the highest-fidelity compliant export base
 
 **Filename.** Give the saved PNG a short, descriptive name built from the design (for example `Navy_Orange_Stripes` or `Matte_Black_White_Wordmark`), not a generic one like `wrap`, `final`, or `output`. Tesla's rules: the name before `.png` is 1 to 30 characters and uses only letters (A–Z, a–z), digits, underscores, hyphens, and spaces; the extension is `.png`. No periods other than the extension, apostrophes, accents or non-English letters, ampersands, slashes, emoji, or any other symbol. Prefer underscores over spaces, no leading or trailing space, and shorten at a word boundary if the description runs past 30 characters. Count the characters before saving, and treat `scripts/check_wrap.py` as the final check (it rejects invalid names).
 
-Persist the final artifact using the applicable file-saving workflow, then provide one direct Markdown download link to the exact saved, validated PNG (for example `[Design_Name.png](sandbox:/absolute/path/Design_Name.png)`), followed by one or two plain sentences saying what you built (the design, colors, and where the main elements sit). Leave out technical details: no dimensions, byte counts, panel counts, mask or validation results, or the vehicle name. Validation still runs; the user just doesn't need the readout. If something other than the size and dimension limits couldn't be verified, say so briefly instead. Never deliver a file that fails the size or dimension limits: fix it first. Do not embed the PNG inline or show previews, additional files, or ZIPs unless the user asks. Use the direct file link so mobile downloads retrieve the original PNG rather than a potentially re-encoded image from the inline viewer. Deliver no draft, high-resolution working image, enlarged crop, or diagnostic. If image-generation tooling necessarily exposes a draft, do not repeat it or treat it as completion; finish the verified deliverable.
+Persist the final artifact using the applicable file-saving workflow, then show the exact saved, validated PNG inline with Markdown image syntax (for example `![Design_Name](sandbox:/absolute/path/Design_Name.png)`). Follow it with one or two plain sentences saying what you built. Do not add a separate download link unless the user asks. Leave out technical details: no dimensions, byte counts, panel counts, mask or validation results, or the vehicle name. If something other than the size and dimension limits could not be verified, say so briefly. Never deliver a file that fails the size or dimension limits: fix it first. Keep drafts, previews, high-resolution working images, enlarged crops, diagnostics, extra files, and ZIPs internal unless requested. If image-generation tooling exposes a draft, finish the verified deliverable before treating the task as complete.
