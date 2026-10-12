@@ -45,4 +45,4 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 
 - The mirror cap face toward the rear of the car.
 - The exact canvas split between the spoiler's top strip and its rear lip (visible surface is about y 896–932).
-- The exact canvas pixel where each seam's art lines up. The photos show correspondence by eye, not by sampled pixel values.
+- The exact canvas pixel where each seam's art lines up. The photos show correspondence by eye only. Decoding canvas x/y from sampled photo colors was tried and does not work: the photos are of the in-car screen, and door 7 (expected R about 20–65, B about 84) read about R 1–6, B 22–75 with glare and moiré on top. Pixel-level alignment would need straight-on, zoomed shots where grid lines can be counted, not color decoding.
