@@ -1,4 +1,4 @@
-"""Fit a wrap PNG under the 1,000,000-byte cap without touching alpha, gaps, or dimensions.
+"""Fit a wrap PNG under the 700,000-byte cap without touching alpha, gaps, or dimensions.
 
 Lossless optimisation first; if the file is still too large, the colors of the visible pixels are
 reduced step by step (most frequent exact colors are kept exactly, no dithering) until it fits.
@@ -15,7 +15,7 @@ from PIL import Image
 from scipy.spatial import cKDTree
 
 ROOT = Path(__file__).resolve().parents[1]
-CAP = 1_000_000
+CAP = 700_000
 LADDER = (256, 192, 128, 96, 64, 48, 32, 24, 16, 12, 8, 6, 4)
 
 
