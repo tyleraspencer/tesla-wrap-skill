@@ -50,16 +50,6 @@ The skill returns a single verified PNG. It is exactly 1024 × 1024, strictly un
 python scripts/check_wrap.py my_wrap.png --template assets/modely-2025-premium-template.png
 ```
 
-## Calibration photos
-
-The skill's seam reference ([references/seam-adjacency.md](references/seam-adjacency.md)) comes from these Tesla app 3D previews of a position-coded test texture ([`Calibration_Grid.png`](references/calibration-photos/Calibration_Grid.png)). Each panel shows its ID and a yellow arrow pointing toward the top of the canvas.
-
-| Front-left, raised | Front-left, low |
-| --- | --- |
-| ![Front-left three-quarter, raised](references/calibration-photos/01-front-left-3q-high.jpg) | ![Front-left three-quarter, low](references/calibration-photos/02-front-left-3q-low.jpg) |
-| **Rear-left** | **Top-down** |
-| ![Rear-left three-quarter](references/calibration-photos/03-rear-left-3q.jpg) | ![Top-down, nose up](references/calibration-photos/04-top-down.jpg) |
-
 ## Contents
 
 | Path | Purpose |

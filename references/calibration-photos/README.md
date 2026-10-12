@@ -13,3 +13,11 @@ These back the conclusions in [../seam-adjacency.md](../seam-adjacency.md). Open
 | `Calibration_Grid.png` | The texture used. Passes `scripts/check_wrap.py`, so it can be re-uploaded to retake photos |
 
 Not yet photographed: passenger side, straight-on front, straight-on rear, close-ups of the front fender/bumper corner.
+
+## Preview
+
+| Front-left, raised | Front-left, low |
+| --- | --- |
+| ![Front-left three-quarter, raised](01-front-left-3q-high.jpg) | ![Front-left three-quarter, low](02-front-left-3q-low.jpg) |
+| **Rear-left** | **Top-down** |
+| ![Rear-left three-quarter](03-rear-left-3q.jpg) | ![Top-down, nose up](04-top-down.jpg) |
