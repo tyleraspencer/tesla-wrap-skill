@@ -12,7 +12,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 - **Hood 2:** canvas-up points toward the front; the label reads upside down to someone standing at the nose.
 - **Trunk 20** is canvas-upright when viewed from behind; text reads left to right. Seen.
 - **Mirror caps 9 and 10:** both labels read upside down from the side with the arrow at the bottom, so canvas-up points toward the ground on the outer face. Seen on both caps. A zoomed front-left three-quarter of cap 10 shows the same upside-down label from the front, so the label's face spans the cap's front and outer sides. A view from above and in front shows the label on the cap's upper-outer face, reading the same way. The face toward the rear of the car was not photographed.
-- **Spoiler 17:** a close-up from above and behind puts the label and the heavy y = 896 line right at the glass base. Everything from there back to the tail-lamp bar is the visible surface: a shallow top strip that curls over a crest into a steeper rear-facing lip. So the visible spoiler is roughly canvas y 896–932, and the 871–896 sliver sits under the glass edge. The strip/lip split between those is not measured. Do not put text or logos on the spoiler.
+- **Spoiler 17:** a close-up from above and behind puts the label and the heavy y = 896 line right at the glass base. Everything from there back to the tail-lamp bar is the visible surface: a shallow top strip that curls over a crest into a steeper rear-facing lip. So the visible spoiler is roughly canvas y 896–932, and the 871–896 sliver sits under the glass edge. The strip/lip split between those is not measured. Text and logos are allowed there; the split is only approximate, so flag the placement as unverified.
 
 ## Seams
 
@@ -38,7 +38,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 2. Roof pillars: continue a stripe from 5 into 15 (and 6 into 16) in one stroke; do not restart it.
 3. A stripe from the hood down the nose runs 2 → 1 across the chrome strip: use the hood's canvas-top edge and the bumper's canvas-bottom edge. A stripe across the nose corner crosses the headlight strip from the fender (3 or 4) into the bumper.
 4. Remember bumper 1 is upside down relative to the hood: canvas-up on the bumper is toward the ground, canvas-up on the hood is toward the nose.
-5. Avoid text, logos, or directional art on the mirror caps (9, 10) and on the spoiler (17).
+5. Text, logos, and directional art are allowed on the mirror caps (9, 10) and the spoiler (17). Evidence is limited there: caps show canvas-up toward the ground on the outer face only, and the spoiler's strip/lip split is unmeasured. Place the art, then flag that placement as unverified and worth checking on the car.
 6. The rear face is 20 (center) with 18 and 19 wrapping the lower corners; keep logos inside 20. The rear quarters (13, 14) stop at the tail lamps and never reach the rear face, so a design cannot run from a quarter straight onto the trunk without crossing 18 or 19.
 
 ## Still open

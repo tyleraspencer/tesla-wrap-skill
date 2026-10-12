@@ -29,17 +29,21 @@ Both door spaces fit one straight baseline to original door contours at y380–6
 | `polygon` | `points: [[x,y],...]`, `color` |
 | `line` | `points`, `width`, `color` |
 | `stars` | `centers: [[x,y],...]`, `radius`; optional `color`, `angle` (0 = atlas upright) |
-| `text` | `text`, `font`, `font_size`, `center`, `size: [width,height]`; optional `color`, `angle` |
-| `image` | `file`, `center`, `size`; optional `angle` |
-| `wordmark` | `text`, `font`; optional `cap_height` (default 58), `inset` (default 64, px in from the outer door edge), `min_gap` (default 16), `color`. Door space only, on a layer targeting exactly `[7, 11]` or `[8, 12]` |
+| `ellipse` | `box: [x0,y0,x1,y1]`, `color` |
+| `gradient` | `stops: [[0,color],[1,color],...]`; optional `angle` (degrees, 0 = left to right), `box` (default whole canvas). Atlas space only |
+| `text` | `text`, `font`, `font_size`, `center`, `size: [width,height]`; optional `color`, `angle`, `stroke_width`, `stroke_color`, `allow_clip` |
+| `image` | `file`, `center`, `size`; optional `angle`, `fit` (`contain` keeps aspect ratio, default; `stretch` fills the box), `allow_clip` |
+| `wordmark` | `text`, `font`; optional `cap_height` (default 58), `inset` (default 64, px in from the outer door edge), `seam` (`avoid` default, or `ignore`), `tracking` (px, `ignore` mode), `min_gap` (default 16, `avoid` mode), `color`. Door space only, on a layer targeting exactly `[7, 11]` or `[8, 12]` |
 
-Positions and sizes use native canvas pixels even though artwork renders at 4× by default (`--scale 1` through `8`). Text and images fit inside the size box while preserving aspect ratio. Images retain source colors and opacity; rasterize official SVGs accurately before passing them to this Pillow renderer. Never use the decorative primitives to recreate official logos.
+Positions and sizes use native canvas pixels even though artwork renders at 4× by default (`--scale 1` through `8`). Text and images fit inside the size box (images keep their aspect ratio unless `fit` is `stretch`). Images retain source colors and opacity; rasterize official SVGs accurately before passing them to this Pillow renderer. Prefer an official asset over recreating a logo from the decorative primitives.
 
-**Placement check.** Every `text`, `image`, and `wordmark` is tested before export: its ink, plus a 3 px margin, must stay inside the layer's panels. Anything that crosses a seam or panel edge fails the render with the overshoot in pixels. Set `"allow_clip": true` on that operation when clipping is deliberate. Fills, stripes, stars, and other decorative shapes are never checked and may run to any edge.
+The operations above are building blocks, not a ceiling. Any effect they do not cover (textures, freeform illustration, photographic art, custom lettering) can be made with any tool, saved as a PNG with alpha, and placed with an `image` operation at any size, even the full 1024 × 1024 canvas. Custom compositing code is equally fine as long as it applies the original alpha and gap pixels last.
 
-**Wordmark.** On a door pair it sets the word on the shared baseline, rotated per side and never mirrored, then sizes the letter gaps so the door seam falls inside one gap and no letter is cut. It tries each gap position, most balanced first, and keeps the first that clears the masks; the choice goes in the manifest under `wordmarks`. The cost is wide, even letter spacing (at least about 16 px, usually 20–24) and a single line of text. Use `text` with `allow_clip` instead for art that should deliberately run across the seam.
+**Placement check (advisory).** Every `text`, `image`, and `wordmark` is tested before export: if its ink, plus a 3 px margin, leaves the layer's panels (crosses a seam or panel edge), the renderer prints a warning and records it in the manifest under `warnings`. It never blocks a render: the artwork is clipped by the original masks as designed. Set `"allow_clip": true` on an operation to silence its warning, or pass `--strict-placement` to make warnings fail the render. Fills, stripes, shapes, and gradients are never checked and may run to any edge.
 
-The renderer rejects directional marks (text, images, stars, wordmarks) on mirrors and spoiler. Pillars should receive fills/accents only. For atlas placement on all other panels, reading and applying the reference remains mandatory.
+**Wordmark.** On a door pair it sets the word on the shared baseline, rotated per side and never mirrored, then (with `seam: avoid`, the default) sizes the letter gaps so the door seam falls inside one gap and no letter is cut. It tries each gap position, most balanced first, and keeps the first that clears the masks; if none does, it still renders and warns. That mode needs wide, even letter spacing (at least about 16 px, usually 20–24). With `seam: ignore` the word uses the font's natural spacing plus optional `tracking`, centred on the seam, and the placement check only warns if a letter is cut. Use plain `text` for art that should deliberately run across the seam. Choices go in the manifest under `wordmarks`.
+
+Directional art (text, images, stars, wordmarks) is allowed on every panel, including mirror caps, the spoiler, and the pillars. Where on-car evidence is limited (mirror caps, spoiler), the renderer adds a warning so the final check on the car is on purpose, not a surprise. For atlas placement, reading and applying the orientation reference remains mandatory.
 
 ## Export and inspection
 

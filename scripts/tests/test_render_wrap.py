@@ -41,12 +41,13 @@ class RendererTests(unittest.TestCase):
         self.assertTrue(np.array_equal(np.array(Renderer(c, '.', 2).render()),
                                        np.array(Renderer(combined, '.', 2).render())))
 
-    def test_unresolved_directional_art_rejected(self):
+    def test_directional_art_on_mirrors_and_spoiler_allowed_with_warning(self):
         for p in [9, 10, 17]:
             c = design()
             c['layers'] = [{'panels': [p], 'operations': [{'kind': 'stars', 'centers': [[500,500]], 'radius': 10}]}]
-            with self.assertRaisesRegex(ValueError, 'nondirectional'):
-                Renderer(c, '.', 1).render()
+            r = Renderer(c, '.', 1)
+            r.render()
+            self.assertTrue(any('mirror cap/spoiler' in w for w in r.warnings))
 
     def test_door_frame_and_wrong_side(self):
         r = Renderer(design(), '.', 1)
@@ -99,15 +100,49 @@ class PlacementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'No font found'):
             r.resolve_font(['/no/such/font.ttf'])
 
-    def test_text_crossing_seam_rejected_unless_allowed(self):
+    def test_text_crossing_seam_warns_never_blocks(self):
         c = design()
         op = {'kind': 'text', 'text': 'USA', 'font': FONTS, 'font_size': 80, 'color': '#FFFFFF',
               'center': [150, 580], 'size': [150, 60], 'angle': -90}
         c['layers'] = [{'panels': [7, 11], 'operations': [op]}]
+        r = Renderer(c, '.', 1)
+        r.render()
+        self.assertTrue(any('reaches outside panels' in w for w in r.warnings))
         with self.assertRaisesRegex(ValueError, 'reaches outside panels'):
-            Renderer(c, '.', 1).render()
+            Renderer(c, '.', 1, strict=True).render()
         c['layers'][0]['operations'] = [{**op, 'allow_clip': True}]
-        Renderer(c, '.', 1).render()
+        r = Renderer(c, '.', 1, strict=True)
+        r.render()
+        self.assertEqual(r.warnings, [])
+
+    def test_natural_spacing_wordmark_and_new_effects(self):
+        c = design()
+        c['layers'] = [
+            {'panels': [7, 11], 'space': 'door_left', 'operations': [
+                {'kind': 'wordmark', 'text': 'PLUGS', 'font': FONTS, 'seam': 'ignore', 'tracking': 2}]},
+            {'panels': [2], 'operations': [
+                {'kind': 'gradient', 'stops': [[0, '#FF0000'], [1, '#0000FF']], 'angle': 0, 'box': [373, 108, 648, 342]},
+                {'kind': 'ellipse', 'box': [450, 150, 570, 250], 'color': '#FFFFFF'},
+                {'kind': 'text', 'text': 'GO', 'font': FONTS, 'font_size': 60, 'center': [510, 200], 'size': [90, 40],
+                 'color': '#FFFFFF', 'stroke_width': 3, 'stroke_color': '#000000'}]}]
+        r = Renderer(c, '.', 2)
+        a = np.array(r.render())
+        self.assertEqual(r.wordmarks[0]['mode'], 'ignore')
+        self.assertTrue(np.array_equal(a[:, :, 3], r.original[:, :, 3]))
+        xs = np.where(r.ids[300] == 2)[0]
+        left, right = a[300, xs.min() + 4, :3].astype(int), a[300, xs.max() - 4, :3].astype(int)
+        self.assertGreater(left[0], right[0])    # red fades out left to right
+        self.assertGreater(right[2], left[2])    # blue fades in
+        self.assertTrue(np.all(a[160, 510, :3] == 255))  # ellipse
+
+    def test_image_stretch_option(self):
+        with tempfile.TemporaryDirectory() as folder:
+            Image.new('RGBA', (40, 20), (255, 255, 255, 255)).save(Path(folder) / 'mark.png')
+            c = design()
+            c['layers'] = [{'panels': [2], 'operations': [{'kind': 'image', 'file': 'mark.png', 'fit': 'stretch',
+                                                           'center': [510, 220], 'size': [100, 100]}]}]
+            a = np.array(Renderer(c, folder, 1).render())
+            self.assertTrue(np.all(a[180, 510, :3] == 255))  # stretched to fill the box, unlike 2:1 contain
 
     def test_wordmark_clears_seam_on_both_sides(self):
         for pair, space in (([7, 11], 'door_left'), ([8, 12], 'door_right')):
@@ -130,7 +165,7 @@ class PlacementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'exactly panels'):
             Renderer(c, '.', 1).render()
         c['layers'] = [{'panels': [10], 'operations': [{'kind': 'wordmark', 'text': 'AB', 'font': FONTS}]}]
-        with self.assertRaisesRegex(ValueError, 'nondirectional'):
+        with self.assertRaisesRegex(ValueError, 'door_left or door_right'):
             Renderer(c, '.', 1).render()
 
 

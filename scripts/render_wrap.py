@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Renderer:
-    def __init__(self, config, config_dir, scale=4):
+    def __init__(self, config, config_dir, scale=4, strict=False):
         if type(scale) is not int or not 1 <= scale <= 8:
             raise ValueError('Scale must be an integer from 1 to 8')
         self.config, self.config_dir, self.scale = config, Path(config_dir), scale
@@ -37,7 +37,7 @@ class Renderer:
                 raise ValueError(f"ID map geometry differs for panel {panel['id']}")
         self.baselines = {}
         self.records = {p['id']: {**p, 'layers': []} for p in self.geometry['panels']}
-        self.fonts_used, self.wordmarks = set(), []
+        self.fonts_used, self.wordmarks, self.warnings, self.strict = set(), [], [], strict
         self._coverage, self.current_panels = False, []
 
     def color(self, value):
@@ -93,8 +93,11 @@ class Renderer:
         width, height = op['size']
         if width <= 0 or height <= 0:
             raise ValueError('Asset size must be positive')
-        ratio = min(width * self.scale / asset.width, height * self.scale / asset.height)
-        asset = asset.resize((max(1, round(asset.width * ratio)), max(1, round(asset.height * ratio))), Image.Resampling.LANCZOS)
+        if op.get('fit') == 'stretch':
+            asset = asset.resize((max(1, round(width * self.scale)), max(1, round(height * self.scale))), Image.Resampling.LANCZOS)
+        else:
+            ratio = min(width * self.scale / asset.width, height * self.scale / asset.height)
+            asset = asset.resize((max(1, round(asset.width * ratio)), max(1, round(asset.height * ratio))), Image.Resampling.LANCZOS)
         asset = asset.rotate(self.angle(op, space), Image.Resampling.BICUBIC, expand=True)
         if self._coverage:
             white = Image.new('L', asset.size, 255)
@@ -112,8 +115,8 @@ class Renderer:
         raise ValueError(f'No font found in: {value}')
 
     def check_placement(self, layer):
-        # Text, images, and wordmarks must stay inside the layer's panels (3 px margin),
-        # which also catches letters cut by a seam. Opt out per operation with allow_clip.
+        # Advisory: report text, images, and wordmarks whose ink (3 px margin) leaves the layer's
+        # panels, e.g. letters cut by a seam. Never blocks a design unless strict=True.
         inside = np.isin(self.ids, layer['panels'])
         self.current_panels = layer['panels']
         space = layer.get('space', 'atlas')
@@ -130,16 +133,22 @@ class Renderer:
             bad = int((ndimage.binary_dilation(ink, iterations=3) & ~inside).sum())
             if bad:
                 label = op.get('text') or op.get('file') or op['kind']
-                raise ValueError(
-                    f"{op['kind']} '{label}' reaches outside panels {layer['panels']} by {bad} px "
-                    '(crosses a seam or panel edge). Move or shrink it, use a wordmark operation '
-                    'for door pairs, or set allow_clip for deliberate clipping')
+                message = (f"{op['kind']} '{label}' reaches outside panels {layer['panels']} by {bad} px "
+                           '(crosses a seam or panel edge; it is clipped by the original masks)')
+                if self.strict:
+                    raise ValueError(message)
+                self.warnings.append(message)
 
     def wordmark(self, canvas, op, space):
-        # Door-pair text on the shared baseline with letter gaps sized so the door seam
-        # falls inside one gap; tries each gap and keeps the first that stays inside the doors.
+        # Door-pair text on the shared baseline, rotated per side and never mirrored.
+        # seam "avoid" (default): letter gaps sized so the door seam falls inside one gap.
+        # seam "ignore": natural font spacing (plus optional tracking px), centred on the seam;
+        # the placement check then only warns if a letter is cut.
         if space not in ('door_left', 'door_right'):
             raise ValueError('wordmark needs a door_left or door_right layer')
+        mode = op.get('seam', 'avoid')
+        if mode not in ('avoid', 'ignore'):
+            raise ValueError('wordmark seam must be "avoid" or "ignore"')
         side = space.removeprefix('door_')
         pair = [7, 11] if side == 'left' else [8, 12]
         if sorted(self.current_panels) != pair:
@@ -157,15 +166,9 @@ class Renderer:
         probe = ImageFont.truetype(font_path, 200)
         flat = probe.getbbox('H')
         font = ImageFont.truetype(font_path, max(8, round(cap * big * 200 / (flat[3] - flat[1]))))
-        glyphs = []
-        for ch in op['text'].replace(' ', ''):
-            m = Image.new('L', (int(cap * big * 3), int(cap * big * 3)), 0)
-            ImageDraw.Draw(m).text((20, 20), ch, font=font, fill=255)
-            if m.getbbox() is None:
-                raise ValueError(f'Glyph {ch!r} has no visible pixels')
-            glyphs.append(m.crop(m.getbbox()))
-        if len(glyphs) < 2:
-            raise ValueError('wordmark needs at least two letters')
+        text = op['text']
+        if not text.replace(' ', ''):
+            raise ValueError('Text must contain visible glyphs')
 
         def at(p):
             x, y = int(round(p[0])), int(round(p[1]))
@@ -176,38 +179,70 @@ class Renderer:
         if not seam:
             raise ValueError('Could not locate the door seam along the baseline')
         umin, umax = min(seam), max(seam)
-        gap = max(umax - umin + 2 * margin, float(op.get('min_gap', 16)))
-        widths = [g.width / big for g in glyphs]
-        starts, u = [], 0.0
-        for w in widths:
-            starts.append(u)
-            u += w + gap
-        total = u - gap
-        inside = np.isin(self.ids, pair)
-        order = sorted(range(1, len(glyphs)), key=lambda k: abs(starts[k] - gap / 2 - total / 2))
-        choice = None
-        for k in order:
-            u0 = (umin + umax) / 2 - (starts[k] - gap / 2)
-            pad = 20
-            strip = Image.new('L', (int(total * big) + 2 * pad, int(cap * big) + 2 * pad), 0)
-            for g, start in zip(glyphs, starts):
-                strip.paste(g, (int(start * big) + pad, pad + int(cap * big) - g.height))
-            sc = self.scale
+        centre = (umin + umax) / 2
+        sc, pad = self.scale, 20
+
+        def to_canvas(strip, u0):
             data = (big * d[0] / sc, big * d[1] / sc, big * (-origin[0] * d[0] - origin[1] * d[1] - u0) + pad,
                     -big * n[0] / sc, -big * n[1] / sc, big * (cap + origin[0] * n[0] + origin[1] * n[1]) + pad)
-            mask = strip.transform(canvas.size, Image.AFFINE, data, resample=Image.BICUBIC)
-            ink = np.array(mask.resize((1024, 1024), Image.Resampling.BOX)) > 5
-            if not (ndimage.binary_dilation(ink, iterations=3) & ~inside).any():
-                choice = (k, mask)
-                break
-        if choice is None:
-            raise ValueError('No letter gap lets the wordmark clear the door seam; reduce cap_height or inset')
-        k, mask = choice
+            return strip.transform(canvas.size, Image.AFFINE, data, resample=Image.BICUBIC)
+
+        info = {'text': text, 'side': side, 'mode': mode, 'cap_height': cap, 'inset': float(op.get('inset', 64)),
+                'seam_extent_along_text': [umin, umax]}
+        if mode == 'ignore':
+            tracking = float(op.get('tracking', 0))
+            total = font.getlength(text) / big + tracking * (len(text) - 1)
+            strip = Image.new('L', (int(total * big) + 2 * pad + 40, int(cap * big * 1.5) + 2 * pad), 0)
+            drawer = ImageDraw.Draw(strip)
+            for index, ch in enumerate(text):
+                x = font.getlength(text[:index]) + tracking * big * index
+                drawer.text((pad + x, pad + cap * big), ch, font=font, fill=255, anchor='ls')
+            mask = to_canvas(strip, centre - total / 2)
+            info['tracking'] = tracking
+        else:
+            glyphs = []
+            for ch in text.replace(' ', ''):
+                m = Image.new('L', (int(cap * big * 3), int(cap * big * 3)), 0)
+                ImageDraw.Draw(m).text((20, 20), ch, font=font, fill=255)
+                if m.getbbox() is None:
+                    raise ValueError(f'Glyph {ch!r} has no visible pixels')
+                glyphs.append(m.crop(m.getbbox()))
+            if len(glyphs) < 2:
+                raise ValueError('seam "avoid" needs at least two letters; use seam "ignore"')
+            gap = max(umax - umin + 2 * margin, float(op.get('min_gap', 16)))
+            widths = [g.width / big for g in glyphs]
+            starts, u = [], 0.0
+            for w in widths:
+                starts.append(u)
+                u += w + gap
+            total = u - gap
+            inside = np.isin(self.ids, pair)
+            order = sorted(range(1, len(glyphs)), key=lambda k: abs(starts[k] - gap / 2 - total / 2))
+            choice = None
+            for k in order:
+                strip = Image.new('L', (int(total * big) + 2 * pad, int(cap * big) + 2 * pad), 0)
+                for g, start in zip(glyphs, starts):
+                    strip.paste(g, (int(start * big) + pad, pad + int(cap * big) - g.height))
+                mask = to_canvas(strip, centre - (starts[k] - gap / 2))
+                ink = np.array(mask.resize((1024, 1024), Image.Resampling.BOX)) > 5
+                if not (ndimage.binary_dilation(ink, iterations=3) & ~inside).any():
+                    choice = (k, mask)
+                    break
+            if choice is None:
+                # Never refuse: fall back to the most balanced split and report that it is clipped.
+                k = order[0]
+                strip = Image.new('L', (int(total * big) + 2 * pad, int(cap * big) + 2 * pad), 0)
+                for g, start in zip(glyphs, starts):
+                    strip.paste(g, (int(start * big) + pad, pad + int(cap * big) - g.height))
+                choice = (k, to_canvas(strip, centre - (starts[k] - gap / 2)))
+                if not self._coverage:
+                    self.warnings.append(f"wordmark '{text}' could not clear the {side} door seam with letter gaps; "
+                                         'it is clipped by the masks. Try a smaller cap_height/inset or seam "ignore"')
+            k, mask = choice
+            info.update({'seam_after_letter': k, 'gap_px': round(gap, 1)})
         canvas.paste(self.color(op.get('color', '#FFFFFF')), (0, 0), mask)
         if not self._coverage:
-            self.wordmarks.append({'text': op['text'], 'side': side, 'seam_after_letter': k,
-                                   'gap_px': round(gap, 1), 'seam_extent_along_text': [umin, umax],
-                                   'cap_height': cap, 'inset': float(op.get('inset', 64))})
+            self.wordmarks.append(info)
 
     def draw(self, canvas, op, space):
         draw = ImageDraw.Draw(canvas)
@@ -238,12 +273,40 @@ class Renderer:
                 draw.polygon(self.scaled(points, 'atlas'), fill=color)
         elif kind == 'text':
             font = ImageFont.truetype(str(self.resolve_font(op['font'])), round(op['font_size'] * self.scale))
-            bbox = font.getbbox(op['text'])
+            stroke = round(float(op.get('stroke_width', 0)) * self.scale)
+            bbox = font.getbbox(op['text'], stroke_width=stroke)
             if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
                 raise ValueError('Text must contain visible glyphs')
             asset = Image.new('RGBA', (bbox[2] - bbox[0] + 2 * self.scale, bbox[3] - bbox[1] + 2 * self.scale))
-            ImageDraw.Draw(asset).text((self.scale - bbox[0], self.scale - bbox[1]), op['text'], font=font, fill=(*color, 255))
+            ImageDraw.Draw(asset).text((self.scale - bbox[0], self.scale - bbox[1]), op['text'], font=font,
+                                       fill=(*color, 255), stroke_width=stroke,
+                                       stroke_fill=(*self.color(op.get('stroke_color', '#000000')), 255))
             self.paste_asset(canvas, asset, op, space)
+        elif kind == 'ellipse':
+            x0, y0, x1, y1 = op['box']
+            cx, cy, rx, ry = (x0 + x1) / 2, (y0 + y1) / 2, abs(x1 - x0) / 2, abs(y1 - y0) / 2
+            ring = [(cx + rx * math.cos(2 * math.pi * k / 180), cy + ry * math.sin(2 * math.pi * k / 180)) for k in range(180)]
+            draw.polygon(self.scaled(ring, space), fill=color)
+        elif kind == 'gradient':
+            if space != 'atlas':
+                raise ValueError('gradient uses atlas coordinates')
+            x0, y0, x1, y1 = op.get('box', [0, 0, 1024, 1024])
+            stops = sorted((float(t), np.array(self.color(c), float)) for t, c in op['stops'])
+            theta = math.radians(float(op.get('angle', 0)))
+            ux, uy = math.cos(theta), math.sin(theta)
+            corners = [(x0, y0), (x1, y0), (x0, y1), (x1, y1)]
+            proj = [cx * ux + cy * uy for cx, cy in corners]
+            lo, hi = min(proj), max(proj)
+            yy, xx = np.mgrid[0:canvas.height, 0:canvas.width]
+            t = np.clip(((xx + .5) / self.scale * ux + (yy + .5) / self.scale * uy - lo) / max(hi - lo, 1e-9), 0, 1)
+            out = np.zeros(t.shape + (3,))
+            for ch in range(3):
+                out[:, :, ch] = np.interp(t, [a for a, _ in stops], [c[ch] for _, c in stops])
+            layer_img = Image.fromarray(out.round().astype(np.uint8))
+            region = Image.new('L', canvas.size, 0)
+            ImageDraw.Draw(region).rectangle((round(x0 * self.scale), round(y0 * self.scale),
+                                              round(x1 * self.scale) - 1, round(y1 * self.scale) - 1), fill=255)
+            canvas.paste(layer_img, (0, 0), region)
         elif kind == 'wordmark':
             self.wordmark(canvas, op, space)
         elif kind == 'image':
@@ -276,7 +339,8 @@ class Renderer:
                 raise ValueError('Right door frame is restricted to the right side panels')
             operations = layer['operations']
             if set(panels) & {9, 10, 17} and any(o['kind'] in ['text', 'image', 'stars', 'wordmark'] for o in operations):
-                raise ValueError('Mirror caps and spoiler permit nondirectional fills/accents only')
+                self.warnings.append(f'Directional art on mirror cap/spoiler panels {sorted(set(panels) & {9, 10, 17})}: '
+                                     'orientation evidence is limited (see seam-adjacency.md); verify on the car')
             self.check_placement(layer)
             for panel in panels:
                 self.records[panel]['layers'].append({'index': index, 'space': space, 'operations': operations})
@@ -325,7 +389,7 @@ class Renderer:
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text(json.dumps({
             'template_sha256': self.geometry['sha256'], 'sources': self.config.get('sources', []),
-            'fonts_used': sorted(self.fonts_used), 'wordmarks': self.wordmarks,
+            'fonts_used': sorted(self.fonts_used), 'wordmarks': self.wordmarks, 'warnings': self.warnings,
             'panels': list(self.records.values()), 'door_baselines': self.baselines,
             'audits': {'pixel_geometry': 'PASS exact source alpha and gaps',
                        'panel_geometry': 'PASS pinned areas/bounds and bundled connected-component check',
@@ -342,10 +406,15 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--manifest', type=Path, required=True)
     parser.add_argument('--scale', type=int, default=4)
+    parser.add_argument('--strict-placement', action='store_true',
+                        help='fail instead of warn when text/images/wordmarks leave their panels')
     args = parser.parse_args()
     try:
         config = json.loads(args.design.read_text())
-        Renderer(config, args.design.resolve().parent, args.scale).save(args.output, args.manifest)
+        renderer = Renderer(config, args.design.resolve().parent, args.scale, args.strict_placement)
+        renderer.save(args.output, args.manifest)
+        for warning in renderer.warnings:
+            print(f'WARNING: {warning}', file=sys.stderr)
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as exc:
         parser.exit(1, f'Render failed: {exc}\n')
 
