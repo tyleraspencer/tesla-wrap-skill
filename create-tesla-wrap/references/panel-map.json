@@ -1,0 +1,231 @@
+{
+  "source": "https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png",
+  "sha256": "336a738ffa7b11eaa4909fcaacc6d9066b38f9a06feba1fddf9634554f27e3b5",
+  "size": [
+    1024,
+    1024
+  ],
+  "mask_method": "4-connected alpha >127 cores; assign nonzero antialias fringe to nearest core; retain original alpha values without thresholding",
+  "panels": [
+    {
+      "id": 1,
+      "name": "Front bumper",
+      "bounds_xyxy_exclusive": [
+        242,
+        6,
+        780,
+        120
+      ],
+      "support_pixels": 39176
+    },
+    {
+      "id": 2,
+      "name": "Hood",
+      "bounds_xyxy_exclusive": [
+        373,
+        108,
+        648,
+        342
+      ],
+      "support_pixels": 50847
+    },
+    {
+      "id": 3,
+      "name": "Canvas-left front quarter",
+      "bounds_xyxy_exclusive": [
+        108,
+        112,
+        334,
+        370
+      ],
+      "support_pixels": 18161
+    },
+    {
+      "id": 4,
+      "name": "Canvas-right front quarter",
+      "bounds_xyxy_exclusive": [
+        691,
+        111,
+        915,
+        371
+      ],
+      "support_pixels": 18168
+    },
+    {
+      "id": 5,
+      "name": "Canvas-left long roofline pillar",
+      "bounds_xyxy_exclusive": [
+        339,
+        344,
+        391,
+        814
+      ],
+      "support_pixels": 9854
+    },
+    {
+      "id": 6,
+      "name": "Canvas-right long roofline pillar",
+      "bounds_xyxy_exclusive": [
+        629,
+        345,
+        682,
+        815
+      ],
+      "support_pixels": 9860
+    },
+    {
+      "id": 7,
+      "name": "Canvas-left front door",
+      "bounds_xyxy_exclusive": [
+        80,
+        345,
+        262,
+        598
+      ],
+      "support_pixels": 35575
+    },
+    {
+      "id": 8,
+      "name": "Canvas-right front door",
+      "bounds_xyxy_exclusive": [
+        759,
+        347,
+        940,
+        599
+      ],
+      "support_pixels": 35584
+    },
+    {
+      "id": 9,
+      "name": "Canvas-right mirror cap",
+      "bounds_xyxy_exclusive": [
+        677,
+        364,
+        752,
+        409
+      ],
+      "support_pixels": 2583
+    },
+    {
+      "id": 10,
+      "name": "Canvas-left mirror cap",
+      "bounds_xyxy_exclusive": [
+        269,
+        365,
+        345,
+        410
+      ],
+      "support_pixels": 2602
+    },
+    {
+      "id": 11,
+      "name": "Canvas-left rear door",
+      "bounds_xyxy_exclusive": [
+        66,
+        567,
+        238,
+        795
+      ],
+      "support_pixels": 29661
+    },
+    {
+      "id": 12,
+      "name": "Canvas-right rear door",
+      "bounds_xyxy_exclusive": [
+        781,
+        570,
+        953,
+        798
+      ],
+      "support_pixels": 29657
+    },
+    {
+      "id": 13,
+      "name": "Canvas-left rear quarter",
+      "bounds_xyxy_exclusive": [
+        121,
+        777,
+        268,
+        953
+      ],
+      "support_pixels": 16907
+    },
+    {
+      "id": 14,
+      "name": "Canvas-right rear quarter",
+      "bounds_xyxy_exclusive": [
+        754,
+        780,
+        901,
+        956
+      ],
+      "support_pixels": 16930
+    },
+    {
+      "id": 15,
+      "name": "Canvas-left short roofline pillar",
+      "bounds_xyxy_exclusive": [
+        299,
+        812,
+        359,
+        965
+      ],
+      "support_pixels": 3758
+    },
+    {
+      "id": 16,
+      "name": "Canvas-right short roofline pillar",
+      "bounds_xyxy_exclusive": [
+        664,
+        813,
+        722,
+        967
+      ],
+      "support_pixels": 3769
+    },
+    {
+      "id": 17,
+      "name": "Rear spoiler",
+      "bounds_xyxy_exclusive": [
+        354,
+        871,
+        666,
+        932
+      ],
+      "support_pixels": 16187
+    },
+    {
+      "id": 18,
+      "name": "Canvas-left rear bumper corner",
+      "bounds_xyxy_exclusive": [
+        53,
+        883,
+        177,
+        1017
+      ],
+      "support_pixels": 9139
+    },
+    {
+      "id": 19,
+      "name": "Canvas-right rear bumper corner",
+      "bounds_xyxy_exclusive": [
+        850,
+        885,
+        971,
+        1019
+      ],
+      "support_pixels": 9143
+    },
+    {
+      "id": 20,
+      "name": "Trunk panel",
+      "bounds_xyxy_exclusive": [
+        393,
+        936,
+        633,
+        1017
+      ],
+      "support_pixels": 17965
+    }
+  ]
+}
