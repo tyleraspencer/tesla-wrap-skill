@@ -88,5 +88,51 @@ class RendererTests(unittest.TestCase):
             self.assertLess(output.stat().st_size, 1_000_000)
 
 
+FONTS = ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+         '/Library/Fonts/Arial Bold.ttf', 'C:/Windows/Fonts/arialbd.ttf']
+
+
+class PlacementTests(unittest.TestCase):
+    def test_font_fallback_list_and_missing_font(self):
+        r = Renderer(design(), '.', 1)
+        self.assertTrue(r.resolve_font(['/no/such/font.ttf'] + FONTS).is_file())
+        with self.assertRaisesRegex(ValueError, 'No font found'):
+            r.resolve_font(['/no/such/font.ttf'])
+
+    def test_text_crossing_seam_rejected_unless_allowed(self):
+        c = design()
+        op = {'kind': 'text', 'text': 'USA', 'font': FONTS, 'font_size': 80, 'color': '#FFFFFF',
+              'center': [150, 580], 'size': [150, 60], 'angle': -90}
+        c['layers'] = [{'panels': [7, 11], 'operations': [op]}]
+        with self.assertRaisesRegex(ValueError, 'reaches outside panels'):
+            Renderer(c, '.', 1).render()
+        c['layers'][0]['operations'] = [{**op, 'allow_clip': True}]
+        Renderer(c, '.', 1).render()
+
+    def test_wordmark_clears_seam_on_both_sides(self):
+        for pair, space in (([7, 11], 'door_left'), ([8, 12], 'door_right')):
+            c = design()
+            c['layers'] = [{'panels': pair, 'space': space, 'operations': [
+                {'kind': 'wordmark', 'text': 'PLUGS', 'font': FONTS, 'color': '#FFFFFF'}]}]
+            r = Renderer(c, '.', 2)
+            a = np.array(r.render())
+            ink = np.all(a[:, :, :3] == 255, axis=2) & (r.ids > 0)
+            self.assertGreater(int(ink.sum()), 3000)
+            self.assertTrue(np.isin(r.ids[ink], pair).all())
+            self.assertTrue(np.array_equal(a[:, :, 3], r.original[:, :, 3]))
+            self.assertEqual(len(r.wordmarks), 1)
+            self.assertEqual(r.wordmarks[0]['side'], space.removeprefix('door_'))
+
+    def test_wordmark_scope_rules(self):
+        c = design()
+        c['layers'] = [{'panels': [7], 'space': 'door_left', 'operations': [
+            {'kind': 'wordmark', 'text': 'AB', 'font': FONTS}]}]
+        with self.assertRaisesRegex(ValueError, 'exactly panels'):
+            Renderer(c, '.', 1).render()
+        c['layers'] = [{'panels': [10], 'operations': [{'kind': 'wordmark', 'text': 'AB', 'font': FONTS}]}]
+        with self.assertRaisesRegex(ValueError, 'nondirectional'):
+            Renderer(c, '.', 1).render()
+
+
 if __name__ == '__main__':
     unittest.main()

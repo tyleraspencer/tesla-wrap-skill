@@ -332,21 +332,27 @@
           "radius": 7,
           "angle": 0,
           "color": "white"
-        },
+        }
+      ]
+    },
+    {
+      "panels": [
+        7,
+        11
+      ],
+      "space": "door_left",
+      "operations": [
         {
-          "kind": "text",
+          "kind": "wordmark",
           "text": "USA",
-          "center": [
-            573,
-            92
+          "font": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+            "C:/Windows/Fonts/arialbd.ttf"
           ],
-          "size": [
-            260,
-            62
-          ],
-          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-          "font_size": 80,
-          "angle": 0,
+          "cap_height": 60,
+          "inset": 64,
           "color": "white"
         }
       ]
@@ -476,21 +482,27 @@
           "radius": 7,
           "angle": 0,
           "color": "white"
-        },
+        }
+      ]
+    },
+    {
+      "panels": [
+        8,
+        12
+      ],
+      "space": "door_right",
+      "operations": [
         {
-          "kind": "text",
+          "kind": "wordmark",
           "text": "USA",
-          "center": [
-            573,
-            92
+          "font": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+            "C:/Windows/Fonts/arialbd.ttf"
           ],
-          "size": [
-            260,
-            62
-          ],
-          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-          "font_size": 80,
-          "angle": 0,
+          "cap_height": 60,
+          "inset": 64,
           "color": "white"
         }
       ]
@@ -1725,7 +1737,12 @@
             92,
             27
           ],
-          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+          "font": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+            "C:/Windows/Fonts/arialbd.ttf"
+          ],
           "font_size": 80,
           "angle": 0,
           "color": "white"

@@ -49,7 +49,7 @@ When the user asks for a theme (a brand, school, city or region, landmark, event
 
 ## 3. Render inside immutable masks
 
-Use the reusable [renderer](references/rendering.md) and `scripts/render_wrap.py` for fills, stripes, stars, text, raster assets, shared door baselines, and validated export. Supply a design JSON; use `references/render-examples/usa.json` as an example. Reuse this tool instead of rebuilding mask/compositing code. Continue the full orientation and four-pass visual audit below; automated checks do not replace it.
+Use the reusable [renderer](references/rendering.md) and `scripts/render_wrap.py` for fills, stripes, stars, text, raster assets, shared door baselines, and validated export. Supply a design JSON; use `references/render-examples/usa.json` as an example. Reuse this tool instead of rebuilding mask/compositing code. It covers flat geometric artwork, text, wordmarks, and placed images; for effects it cannot do (gradients, textures, freeform illustration), generate the artwork separately and bring it in with an `image` operation, or write custom code that keeps the same mask rules. Continue the full orientation and four-pass visual audit below; automated checks do not replace it.
 
 Use image generation for raster art when appropriate, following its workflow, or use authentic vector assets and precise paths for logos, typography, and stripes. Treat generated art as interior artwork only: NEVER accept generated panel silhouettes as the final geometry. Composite artwork into the original masks using deterministic tooling.
 

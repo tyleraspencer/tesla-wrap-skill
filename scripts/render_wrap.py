@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageColor, ImageDraw, ImageFont
+from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,6 +37,8 @@ class Renderer:
                 raise ValueError(f"ID map geometry differs for panel {panel['id']}")
         self.baselines = {}
         self.records = {p['id']: {**p, 'layers': []} for p in self.geometry['panels']}
+        self.fonts_used, self.wordmarks = set(), []
+        self._coverage, self.current_panels = False, []
 
     def color(self, value):
         value = self.config.get('colors', {}).get(value, value)
@@ -93,8 +96,118 @@ class Renderer:
         ratio = min(width * self.scale / asset.width, height * self.scale / asset.height)
         asset = asset.resize((max(1, round(asset.width * ratio)), max(1, round(asset.height * ratio))), Image.Resampling.LANCZOS)
         asset = asset.rotate(self.angle(op, space), Image.Resampling.BICUBIC, expand=True)
+        if self._coverage:
+            white = Image.new('L', asset.size, 255)
+            asset = Image.merge('RGBA', (white, white, white, asset.getchannel('A')))
         x, y = self.point(op['center'], space)
         canvas.paste(asset, (round(x * self.scale - asset.width / 2), round(y * self.scale - asset.height / 2)), asset)
+
+    def resolve_font(self, value):
+        # A font may be one path or a list of fallbacks; use the first that exists.
+        for candidate in (value if isinstance(value, list) else [value]):
+            path = self.asset(candidate)
+            if path.is_file():
+                self.fonts_used.add(str(path))
+                return path
+        raise ValueError(f'No font found in: {value}')
+
+    def check_placement(self, layer):
+        # Text, images, and wordmarks must stay inside the layer's panels (3 px margin),
+        # which also catches letters cut by a seam. Opt out per operation with allow_clip.
+        inside = np.isin(self.ids, layer['panels'])
+        self.current_panels = layer['panels']
+        space = layer.get('space', 'atlas')
+        for op in layer['operations']:
+            if op['kind'] not in ('text', 'image', 'wordmark') or op.get('allow_clip'):
+                continue
+            canvas = Image.new('RGB', (1024 * self.scale, 1024 * self.scale), (0, 0, 0))
+            self._coverage = True
+            try:
+                self.draw(canvas, {**op, 'color': '#FFFFFF'}, space)
+            finally:
+                self._coverage = False
+            ink = np.array(canvas.convert('L').resize((1024, 1024), Image.Resampling.BOX)) > 5
+            bad = int((ndimage.binary_dilation(ink, iterations=3) & ~inside).sum())
+            if bad:
+                label = op.get('text') or op.get('file') or op['kind']
+                raise ValueError(
+                    f"{op['kind']} '{label}' reaches outside panels {layer['panels']} by {bad} px "
+                    '(crosses a seam or panel edge). Move or shrink it, use a wordmark operation '
+                    'for door pairs, or set allow_clip for deliberate clipping')
+
+    def wordmark(self, canvas, op, space):
+        # Door-pair text on the shared baseline with letter gaps sized so the door seam
+        # falls inside one gap; tries each gap and keeps the first that stays inside the doors.
+        if space not in ('door_left', 'door_right'):
+            raise ValueError('wordmark needs a door_left or door_right layer')
+        side = space.removeprefix('door_')
+        pair = [7, 11] if side == 'left' else [8, 12]
+        if sorted(self.current_panels) != pair:
+            raise ValueError(f'wordmark layer must target exactly panels {pair}')
+        fit = self.baseline(side)
+        slope, intercept = fit['x_per_y'], fit['intercept']
+        norm = math.hypot(slope, 1)
+        d = np.array((slope, 1)) / norm if side == 'left' else np.array((-slope, -1)) / norm
+        n = np.array((1, -slope)) / norm if side == 'left' else np.array((-1, slope)) / norm
+        rows = np.where(np.isin(self.ids, pair).any(axis=1))[0]
+        ymid = (rows.min() + rows.max()) / 2
+        origin = np.array((slope * ymid + intercept, ymid)) + float(op.get('inset', 64)) * n
+        cap, margin, big = float(op.get('cap_height', 58)), 6, 8
+        font_path = str(self.resolve_font(op['font']))
+        probe = ImageFont.truetype(font_path, 200)
+        flat = probe.getbbox('H')
+        font = ImageFont.truetype(font_path, max(8, round(cap * big * 200 / (flat[3] - flat[1]))))
+        glyphs = []
+        for ch in op['text'].replace(' ', ''):
+            m = Image.new('L', (int(cap * big * 3), int(cap * big * 3)), 0)
+            ImageDraw.Draw(m).text((20, 20), ch, font=font, fill=255)
+            if m.getbbox() is None:
+                raise ValueError(f'Glyph {ch!r} has no visible pixels')
+            glyphs.append(m.crop(m.getbbox()))
+        if len(glyphs) < 2:
+            raise ValueError('wordmark needs at least two letters')
+
+        def at(p):
+            x, y = int(round(p[0])), int(round(p[1]))
+            return int(self.ids[y, x]) if 0 <= x < 1024 and 0 <= y < 1024 else -1
+        seam = [u for v in np.arange(0, cap + 1, 2) for u in np.arange(-250, 250, 1.0)
+                if at(origin + u * d + v * n) == 0
+                and {at(origin + (u - 6) * d + v * n), at(origin + (u + 6) * d + v * n)} == set(pair)]
+        if not seam:
+            raise ValueError('Could not locate the door seam along the baseline')
+        umin, umax = min(seam), max(seam)
+        gap = max(umax - umin + 2 * margin, float(op.get('min_gap', 16)))
+        widths = [g.width / big for g in glyphs]
+        starts, u = [], 0.0
+        for w in widths:
+            starts.append(u)
+            u += w + gap
+        total = u - gap
+        inside = np.isin(self.ids, pair)
+        order = sorted(range(1, len(glyphs)), key=lambda k: abs(starts[k] - gap / 2 - total / 2))
+        choice = None
+        for k in order:
+            u0 = (umin + umax) / 2 - (starts[k] - gap / 2)
+            pad = 20
+            strip = Image.new('L', (int(total * big) + 2 * pad, int(cap * big) + 2 * pad), 0)
+            for g, start in zip(glyphs, starts):
+                strip.paste(g, (int(start * big) + pad, pad + int(cap * big) - g.height))
+            sc = self.scale
+            data = (big * d[0] / sc, big * d[1] / sc, big * (-origin[0] * d[0] - origin[1] * d[1] - u0) + pad,
+                    -big * n[0] / sc, -big * n[1] / sc, big * (cap + origin[0] * n[0] + origin[1] * n[1]) + pad)
+            mask = strip.transform(canvas.size, Image.AFFINE, data, resample=Image.BICUBIC)
+            ink = np.array(mask.resize((1024, 1024), Image.Resampling.BOX)) > 5
+            if not (ndimage.binary_dilation(ink, iterations=3) & ~inside).any():
+                choice = (k, mask)
+                break
+        if choice is None:
+            raise ValueError('No letter gap lets the wordmark clear the door seam; reduce cap_height or inset')
+        k, mask = choice
+        canvas.paste(self.color(op.get('color', '#FFFFFF')), (0, 0), mask)
+        if not self._coverage:
+            self.wordmarks.append({'text': op['text'], 'side': side, 'seam_after_letter': k,
+                                   'gap_px': round(gap, 1), 'seam_extent_along_text': [umin, umax],
+                                   'cap_height': cap, 'inset': float(op.get('inset', 64))})
 
     def draw(self, canvas, op, space):
         draw = ImageDraw.Draw(canvas)
@@ -124,13 +237,15 @@ class Renderer:
                     points.append((x + math.cos(a) * r, y + math.sin(a) * r))
                 draw.polygon(self.scaled(points, 'atlas'), fill=color)
         elif kind == 'text':
-            font = ImageFont.truetype(str(self.asset(op['font'])), round(op['font_size'] * self.scale))
+            font = ImageFont.truetype(str(self.resolve_font(op['font'])), round(op['font_size'] * self.scale))
             bbox = font.getbbox(op['text'])
             if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
                 raise ValueError('Text must contain visible glyphs')
             asset = Image.new('RGBA', (bbox[2] - bbox[0] + 2 * self.scale, bbox[3] - bbox[1] + 2 * self.scale))
             ImageDraw.Draw(asset).text((self.scale - bbox[0], self.scale - bbox[1]), op['text'], font=font, fill=(*color, 255))
             self.paste_asset(canvas, asset, op, space)
+        elif kind == 'wordmark':
+            self.wordmark(canvas, op, space)
         elif kind == 'image':
             with Image.open(self.asset(op['file'])) as source:
                 asset = source.convert('RGBA')
@@ -160,8 +275,9 @@ class Renderer:
             if space == 'door_right' and not set(panels) <= {4, 8, 12, 14}:
                 raise ValueError('Right door frame is restricted to the right side panels')
             operations = layer['operations']
-            if set(panels) & {9, 10, 17} and any(o['kind'] in ['text', 'image', 'stars'] for o in operations):
+            if set(panels) & {9, 10, 17} and any(o['kind'] in ['text', 'image', 'stars', 'wordmark'] for o in operations):
                 raise ValueError('Mirror caps and spoiler permit nondirectional fills/accents only')
+            self.check_placement(layer)
             for panel in panels:
                 self.records[panel]['layers'].append({'index': index, 'space': space, 'operations': operations})
         # Group panels sharing the same layer stack; render once at high resolution
@@ -176,6 +292,7 @@ class Renderer:
             canvas = Image.new('RGB', (1024 * self.scale, 1024 * self.scale), base)
             for index in stack:
                 layer = layers[index]
+                self.current_panels = layer['panels']
                 for op in layer['operations']:
                     self.draw(canvas, op, layer.get('space', 'atlas'))
             artwork = np.array(canvas.resize((1024, 1024), Image.Resampling.LANCZOS))
@@ -208,6 +325,7 @@ class Renderer:
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text(json.dumps({
             'template_sha256': self.geometry['sha256'], 'sources': self.config.get('sources', []),
+            'fonts_used': sorted(self.fonts_used), 'wordmarks': self.wordmarks,
             'panels': list(self.records.values()), 'door_baselines': self.baselines,
             'audits': {'pixel_geometry': 'PASS exact source alpha and gaps',
                        'panel_geometry': 'PASS pinned areas/bounds and bundled connected-component check',
