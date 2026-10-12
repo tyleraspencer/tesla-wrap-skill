@@ -30,7 +30,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 | 18 \| 20, 19 \| 20 | Rear bumper corner to trunk face | Slanted seam running from the tail-lamp bar down to the bumper; the corner piece wraps from the side onto the rear face | seen |
 | 17 \| 20 | Spoiler lip to trunk face | The tail-lamp bar sits between them on the car; they do not touch | seen |
 | 9 → 4/8, 10 → 3/7 | Mirror cap to the fender/door corner | Cap is a separate surface; no continuity | seen |
-| 13 \| 20, 14 \| 20 | Rear quarter to trunk face, above the corner pieces | The quarter may wrap slightly onto the rear face beside the tail lamp | open |
+| 13 \| 20, 14 \| 20 | Rear quarter to trunk face | They do not meet. The quarter ends at the tail lamp's outer end and the corner piece (18 or 19) sits between it and the trunk face | seen (13); inferred (14) |
 
 ## How to use this when planning a multi-panel design
 
@@ -39,11 +39,10 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 3. A stripe from the hood down the nose runs 2 → 1 across the chrome strip: use the hood's canvas-top edge and the bumper's canvas-bottom edge. A stripe across the nose corner crosses the headlight strip from the fender (3 or 4) into the bumper.
 4. Remember bumper 1 is upside down relative to the hood: canvas-up on the bumper is toward the ground, canvas-up on the hood is toward the nose.
 5. Avoid text, logos, or directional art on the mirror caps (9, 10) and on the spoiler (17).
-6. The rear face is 20 (center) with 18 and 19 wrapping the lower corners; keep logos inside 20.
+6. The rear face is 20 (center) with 18 and 19 wrapping the lower corners; keep logos inside 20. The rear quarters (13, 14) stop at the tail lamps and never reach the rear face, so a design cannot run from a quarter straight onto the trunk without crossing 18 or 19.
 
 ## Still open
 
 - Mirror cap faces from directly behind and from above.
-- Whether 13 and 14 wrap onto the rear face beside the tail lamp.
 - The exact canvas split between the spoiler's top strip and its lip.
 - The exact canvas pixel where each seam's art lines up. The photos show correspondence by eye, not by sampled pixel values.
