@@ -31,7 +31,7 @@ The exact pixel ownership map is `assets/modely-2025-premium-panel-ids.png`: gra
 
 ## Ground-facing edge reference
 
-Read `ground-edge-reference.png`, the user-marked official-template view. Red strokes identify physical ground-facing edge segments, not new masks. Extract exact geometry from the original template; never trace the hand-drawn strokes into output geometry.
+Inspect [ground-edge-reference.png](ground-edge-reference.png), the user's updated reference with red strokes drawn along the ground-facing edges. Use this clearer edge-marked image in place of the earlier circled reference to identify physical bottom edges and their directions for text/logo alignment. Pair it with the untouched official template: use the red-marked reference for orientation and the original template for exact panel shapes and pixel boundaries. Treat stroke thickness, endpoints, and hand-drawn angles as directional guides, never precise geometry; measure alignment from the corresponding original-template edge. Never trace red strokes into masks or include them in final artwork.
 
 | Panels | Ground-facing segment indicated by the user |
 |---|---|
