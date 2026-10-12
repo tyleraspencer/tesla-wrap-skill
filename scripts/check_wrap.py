@@ -21,8 +21,8 @@ def main():
         parser.exit(1, 'Template fingerprint differs from pinned official original; remap before use.\n')
     errors = []
     size = path.stat().st_size
-    if size >= 1_000_000:
-        errors.append(f'Must be under 1,000,000 bytes; got {size}')
+    if size >= 700_000:
+        errors.append(f'Must be under 700,000 bytes; got {size}')
     if path.suffix.lower() != '.png':
         errors.append('Filename must end in .png')
     if not re.fullmatch(r'[A-Za-z0-9_ -]{1,30}', path.stem):
