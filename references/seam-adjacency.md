@@ -1,6 +1,6 @@
 # Model Y 2025 Premium seam adjacency (on-car evidence)
 
-Source: Tesla app 3D preview of a position-coded calibration wrap (R = canvas x, G = canvas y, grid every 32 px, panel ID + canvas-up arrow on every panel). Photos taken: front-left three-quarter (2), front-left low, rear-left three-quarter, and straight top-down. Passenger-side panels (4, 8, 12, 14, 19, 6, 16, 9) are confirmed only where the top-down view shows them; the rest is inferred from the template's left/right symmetry.
+Source: Tesla app 3D preview of a position-coded calibration wrap (R = canvas x, G = canvas y, grid every 32 px, panel ID + canvas-up arrow on every panel). Photos are in [calibration-photos/](calibration-photos/README.md). Photos taken: front-left three-quarter (2), front-left low, rear-left three-quarter, and straight top-down. Passenger-side panels (4, 8, 12, 14, 19, 6, 16, 9) are confirmed only where the top-down view shows them; the rest is inferred from the template's left/right symmetry.
 
 Confidence: **seen** = visible in a photo; **inferred** = follows from seen facts plus template geometry; **open** = not established. Pair this file with [panel-orientation.md](panel-orientation.md); where they disagree, the on-car evidence here wins for adjacency and continuity, and `panel-orientation.md` still wins for geometry and ground-edge baselines.
 
