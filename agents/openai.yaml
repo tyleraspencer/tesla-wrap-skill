@@ -2,7 +2,9 @@ interface:
   display_name: Create Tesla Wrap 2.0
   short_description: Pixel-exact templates, mapped orientation, and crisp Tesla PNGs
   default_prompt: Use $create-tesla-wrap to create a correctly oriented Tesla wrap
-    for Model Y 2025 Premium as a pixel-exact 1024x1024 PNG strictly under 1 MB.
+    for Model Y 2025 Premium as a pixel-exact 1024x1024 PNG strictly under 0.7 MB.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
 policy:
   products:
   - chatgpt
