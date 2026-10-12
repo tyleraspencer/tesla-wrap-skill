@@ -29,7 +29,7 @@ Confirm the planned design fits its intended panel masks before generating the f
 
 ## 2. Place artwork using physical panel axes
 
-Before placing artwork, apply every relevant rule in [panel-orientation.md](references/panel-orientation.md) and inspect [ground-edge-reference.png](references/ground-edge-reference.png). Reading and applying these references is mandatory on every wrap creation or edit; do not rely on remembered orientations.
+Before placing artwork, apply every relevant rule in [panel-orientation.md](references/panel-orientation.md) and inspect [ground-edge-reference.png](references/ground-edge-reference.png). Reading and applying these references is mandatory on every wrap creation or edit; do not rely on remembered orientations. For any design that spans panels or crosses a seam, also read [seam-adjacency.md](references/seam-adjacency.md), the on-car evidence for which panels meet, how art continues across each seam, and which surfaces are still unverified; do not place directional art on panels it marks as open.
 
 Use the orientation reference as the single authority for panel axes, measured baselines, combined door designs, ground-facing edge segments, and unresolved orientations. Keep its rules there instead of duplicating them in this file. Record the applied rules and transforms in the placement manifest, then check the artwork against them during the orientation audit.
 

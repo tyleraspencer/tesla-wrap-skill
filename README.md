@@ -56,6 +56,7 @@ python scripts/check_wrap.py my_wrap.png --template assets/modely-2025-premium-t
 | --- | --- |
 | `SKILL.md` | The skill instructions and workflow |
 | `references/panel-orientation.md` | Panel identities, orientation, and ground-facing edges |
+| `references/seam-adjacency.md` | On-car seam adjacency and continuity from calibration photos |
 | `references/panel-map.json` | Machine-readable panel geometry and template fingerprint |
 | `references/ground-edge-reference.png` | Visual guide to ground-facing edges |
 | `assets/modely-2025-premium-template.png` | Official template (kept untouched) |
