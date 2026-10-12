@@ -51,8 +51,6 @@ When the user asks for a theme (a brand, school, city or region, landmark, event
 
 ## 3. Render inside immutable masks
 
-Use the reusable [renderer](references/rendering.md) and `scripts/render_wrap.py` for fills, stripes, stars, text, raster assets, shared door baselines, and validated export. Supply a design JSON; use `references/render-examples/usa.json` as an example. Reuse this tool for mask/compositing so geometry stays exact. Its operations cover fills, shapes, gradients, stars, text, wordmarks, and placed images, and it only warns (never blocks) about placement; for any effect it does not cover, make the artwork with any tool and bring it in with an `image` operation, or write custom code that applies the original alpha and gap pixels last. Never let the tool's limits shrink what the user asked for. Continue the full orientation and four-pass visual audit below; automated checks do not replace it.
-
 Use image generation for raster art when appropriate, following its workflow, or use authentic vector assets and precise paths for logos, typography, and stripes. Treat generated art as interior artwork only: NEVER accept generated panel silhouettes as the final geometry. Composite artwork into the original masks using deterministic tooling.
 
 Render artwork at high resolution if helpful, then downsample artwork once. Apply the ORIGINAL 1024 × 1024 alpha afterward, byte for byte. Never scale, rotate, move, redraw, expand, shrink, threshold, or blur the template alpha or panel ID masks. Keep original RGB bytes in fully transparent gaps. Composite correctly without dark fringe or double-applied edge alpha.
@@ -81,7 +79,7 @@ Require PASS. The checker verifies file and geometry constraints, not semantic a
 The cap is not negotiable and outranks fidelity. Measure the exact saved file every time. Work down this ladder, and keep going until the file is **under 1,000,000 bytes**:
 
 1. Encode losslessly (optimized PNG, no metadata). PNG compression does not change pixels, so this costs nothing.
-2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256, 192, 128 ... down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the template alpha, gap pixels, and 1024 × 1024 size untouched. `scripts/render_wrap.py` does this automatically.
+2. If still at or over the cap, run `python scripts/fit_size.py in.png out.png`. It reduces the colors of the visible pixels step by step (256, 192, 128 ... down to 4), keeps the most frequent exact colors (flat and brand colors) exact, never dithers, and leaves the template alpha, gap pixels, and 1024 × 1024 size untouched.
 3. If you built the file another way, apply the same ladder yourself. Any reduction method is fine. Never stop at "close" or at a color count you prefer: the only acceptable end state is a file under the cap.
 
 Do not alter the original alpha, the gap pixels, or the dimensions to save bytes. Everything else (colors, gradients, noise, fine detail) may be reduced as far as needed. Prefer the least reduction that gets under the cap, and mention in the final message only if the visible result changed noticeably.
