@@ -11,7 +11,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 - **Bumper 1:** canvas-up points toward the ground. The label's arrow points down on the car, so the canvas-top edge is the low edge and the canvas-bottom edge is the one that meets the hood. Seen from the front, from both sides.
 - **Hood 2:** canvas-up points toward the front; the label reads upside down to someone standing at the nose.
 - **Trunk 20** is canvas-upright when viewed from behind; text reads left to right. Seen.
-- **Mirror caps 9 and 10:** both labels read upside down from the side with the arrow at the bottom, so canvas-up points toward the ground on the outer face. Seen on both caps. The other faces of the caps were not photographed.
+- **Mirror caps 9 and 10:** both labels read upside down from the side with the arrow at the bottom, so canvas-up points toward the ground on the outer face. Seen on both caps. A zoomed front-left three-quarter of cap 10 shows the same upside-down label from the front, so the label's face spans the cap's front and outer sides. The rear and top faces of the caps were not photographed.
 - **Spoiler 17:** the label and the y = 896 line sit on the thin top strip just under the rear glass, near the crest. Below the crest, the rear-facing lip shows only vertical grid lines. Roughly canvas y 871–896 is the top strip and 896–932 is the lip, but the split is approximate and the strip is very thin. Do not put text or logos on the spoiler.
 
 ## Seams
@@ -43,7 +43,7 @@ Confidence: **seen** = visible in a photo; **inferred** = follows from seen fact
 
 ## Still open
 
-- Mirror cap faces other than the outer one.
+- Mirror cap faces from directly behind and from above.
 - Whether 13 and 14 wrap onto the rear face beside the tail lamp.
 - The exact canvas split between the spoiler's top strip and its lip.
 - The exact canvas pixel where each seam's art lines up. The photos show correspondence by eye, not by sampled pixel values.
